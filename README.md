@@ -12,10 +12,13 @@ Get ready for the most savage, AI-powered roast of your GitHub year. Spotify Wra
 
 - **🎭 Savage AI Roasting** - No mercy, just facts wrapped in comedy. Our AI doesn't hold back.
 - **📊 Complete GitHub Stats** - Fetches both public AND private repos for accurate insights.
+- **📈 Visual Data Charts** - Bar charts and stat comparisons for commits, languages, and repo metrics.
+- **🏆 Comprehensive Rankings** - Top repos by stars, forks, and commits with detailed breakdowns.
 - **🎵 Dynamic Background Music** - Music selection based on your coding personality and stats.
 - **📱 Spotify-Inspired UI** - Full-screen swipeable slides with smooth animations and gradients.
 - **🌙 Dark Mode Support** - Beautiful in both light and dark themes.
 - **⚡ Mobile-First Design** - Touch-optimized with swipe gestures for the perfect mobile experience.
+- **📋 Detailed Insights** - 18-20 comprehensive slides covering every aspect of your GitHub year.
 
 ## 🚀 Tech Stack
 
