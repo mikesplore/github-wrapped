@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateWrappedSlides } from "@/ai/flows/generate-wrapped-slides";
-import { analyzeGitHubData } from "@/ai/flows/analyze-github-data";
+import { analyzeGithubData } from "@/ai/flows/analyze-github-data";
 import { determineDevPersonality } from "@/ai/flows/determine-dev-personality";
 import { generateComedicCommentary } from "@/ai/flows/generate-comedic-commentary";
 import { compareYearStats } from "@/ai/flows/compare-year-stats";
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Analyze data with Gemini (using server-side Genkit)
-    const analysis = await analyzeGitHubData({
+    const analysis = await analyzeGithubData({
       userInfo,
       repos,
       commits,
