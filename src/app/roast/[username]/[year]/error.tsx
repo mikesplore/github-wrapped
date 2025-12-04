@@ -65,62 +65,68 @@ export default function Error({
         <div className="rounded-lg border bg-card/50 backdrop-blur-sm p-6 space-y-4">
           {isRateLimitError ? (
             <>
-              <div className="space-y-2 text-left">
-                <p className="text-sm font-semibold">GitHub API Rate Limit Exceeded</p>
-                <p className="text-xs text-muted-foreground">
-                  We've hit GitHub's API limits due to high demand. This happens when:
+              <div className="space-y-3 text-left">
+                <p className="text-sm font-semibold text-red-400">Error Details:</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {error.message}
                 </p>
-                <ul className="text-xs text-muted-foreground space-y-1 ml-4 list-disc">
-                  <li>Too many users are generating roasts simultaneously</li>
-                  <li>You're not logged in (60 requests/hour limit)</li>
-                  <li>The app is experiencing heavy traffic</li>
-                </ul>
               </div>
               
-              <div className="rounded-md bg-blue-500/10 border border-blue-500/20 p-3 space-y-2">
-                <p className="text-sm font-semibold text-blue-400">💡 Solutions:</p>
-                <ul className="text-xs text-muted-foreground space-y-1 ml-4 list-disc">
+              <div className="rounded-md bg-blue-500/10 border border-blue-500/20 p-4 space-y-2">
+                <p className="text-sm font-semibold text-blue-400">💡 How to Fix:</p>
+                <ul className="text-sm text-muted-foreground space-y-2 ml-4 list-disc">
                   <li><strong>Login with GitHub</strong> - Get 5,000 requests/hour instead of 60</li>
-                  <li><strong>Wait 10-15 minutes</strong> - Rate limits reset every hour</li>
-                  <li><strong>Try again later</strong> - When traffic is lower</li>
+                  <li><strong>Wait for rate limit reset</strong> - Check the time mentioned above</li>
+                  <li><strong>Try during off-peak hours</strong> - When traffic is lower</li>
                 </ul>
               </div>
             </>
           ) : isGeminiError ? (
             <>
-              <div className="space-y-2 text-left">
-                <p className="text-sm font-semibold">AI Service Temporarily Unavailable</p>
-                <p className="text-xs text-muted-foreground">
-                  Our AI roasting engine (Google Gemini) is taking a break. This could be due to:
+              <div className="space-y-3 text-left">
+                <p className="text-sm font-semibold text-red-400">Error Details:</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {error.message}
                 </p>
-                <ul className="text-xs text-muted-foreground space-y-1 ml-4 list-disc">
-                  <li>API quota exceeded for today</li>
-                  <li>Temporary service outage</li>
-                  <li>Too many concurrent requests</li>
-                </ul>
               </div>
               
-              <div className="rounded-md bg-blue-500/10 border border-blue-500/20 p-3 space-y-2">
-                <p className="text-sm font-semibold text-blue-400">💡 Try Again:</p>
-                <p className="text-xs text-muted-foreground ml-4">
-                  Wait a few minutes and retry. AI quotas typically reset within an hour.
+              <div className="rounded-md bg-blue-500/10 border border-blue-500/20 p-4 space-y-2">
+                <p className="text-sm font-semibold text-blue-400">💡 What to Do:</p>
+                <p className="text-sm text-muted-foreground ml-4">
+                  Wait a few minutes and retry. AI quotas typically reset within an hour or by the next day.
                 </p>
               </div>
             </>
           ) : isAuthError ? (
             <>
-              <div className="space-y-2 text-left">
-                <p className="text-sm font-semibold">Authentication Error</p>
-                <p className="text-xs text-muted-foreground">
-                  There's an issue with your GitHub authentication. Please try logging out and back in.
+              <div className="space-y-3 text-left">
+                <p className="text-sm font-semibold text-red-400">Error Details:</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {error.message}
+                </p>
+              </div>
+              
+              <div className="rounded-md bg-blue-500/10 border border-blue-500/20 p-4 space-y-2">
+                <p className="text-sm font-semibold text-blue-400">💡 Solution:</p>
+                <p className="text-sm text-muted-foreground ml-4">
+                  Please logout and login again to refresh your GitHub authentication token.
                 </p>
               </div>
             </>
           ) : (
             <>
-              <p className="text-sm text-muted-foreground text-left">
-                {error.message || "An unexpected error occurred while generating your roast."}
-              </p>
+              <div className="space-y-3 text-left">
+                <p className="text-sm font-semibold text-red-400">Error Details:</p>
+                <p className="text-sm text-muted-foreground leading-relaxed break-words">
+                  {error.message}
+                </p>
+              </div>
+              
+              <div className="rounded-md bg-blue-500/10 border border-blue-500/20 p-4">
+                <p className="text-sm text-muted-foreground">
+                  Try refreshing the page or going back home to try again.
+                </p>
+              </div>
             </>
           )}
         </div>
