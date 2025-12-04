@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { AlertCircle, RefreshCw, Home, Clock, Loader2 } from "lucide-react";
+import { AlertCircle, RefreshCw, Home, Clock, Loader2, Settings } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -83,6 +83,7 @@ export default function Error({
               <div className="rounded-md bg-blue-500/10 border border-blue-500/20 p-4 space-y-2">
                 <p className="text-sm font-semibold text-blue-400">💡 How to Fix:</p>
                 <ul className="text-sm text-muted-foreground space-y-2 ml-4 list-disc">
+                  <li><strong>Use Your Own API Keys</strong> - Avoid shared rate limits completely</li>
                   <li><strong>Login with GitHub</strong> - Get 5,000 requests/hour instead of 60</li>
                   <li><strong>Wait for rate limit reset</strong> - Check the time mentioned above</li>
                   <li><strong>Try during off-peak hours</strong> - When traffic is lower</li>
@@ -141,6 +142,14 @@ export default function Error({
 
         {/* Action buttons */}
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+          {isRateLimitError && (
+            <Button variant="outline" asChild>
+              <Link href="/settings">
+                <Settings className="mr-2 h-4 w-4" />
+                Configure API Keys
+              </Link>
+            </Button>
+          )}
           <Button 
             onClick={handleRetry}
             disabled={isRetrying}
@@ -169,7 +178,7 @@ export default function Error({
         {/* Helpful tip */}
         <p className="text-xs text-muted-foreground">
           {isRateLimitError 
-            ? "Tip: Login with GitHub for higher rate limits and private repo access"
+            ? "Tip: Provide your own API keys in settings for unlimited access"
             : "If this persists, please try again in a few minutes"
           }
         </p>
