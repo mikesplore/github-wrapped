@@ -10,9 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Flame, Github, LogOut, Settings } from "lucide-react";
+import { Flame, Github, LogOut } from "lucide-react";
 import { auth, signIn } from "@/auth";
-import Link from "next/link";
 
 export default async function Home() {
   const session = await auth();
@@ -24,18 +23,10 @@ export default async function Home() {
 
   return (
     <main className="relative flex min-h-screen w-full items-center justify-center overflow-hidden p-4">
-      {/* Settings button - top right */}
-      <div className="fixed top-4 right-4 z-10">
-        <Link href="/settings">
-          <Button variant="outline" size="icon" className="rounded-full">
-            <Settings className="h-5 w-5" />
-          </Button>
-        </Link>
-      </div>
-
       {/* Animated gradient background */}
       <div className="fixed inset-0 -z-10 bg-gradient-to-br from-green-500/10 via-background to-blue-500/10" />
       <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-green-400/5 via-transparent to-transparent" />
+      
       
       {/* Floating gradient orbs */}
       <div className="fixed -left-40 top-0 -z-10 h-80 w-80 animate-pulse rounded-full bg-green-500/20 blur-3xl" />

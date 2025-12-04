@@ -1,5 +1,6 @@
 
 const GITHUB_API_URL = "https://api.github.com";
+const GITHUB_GRAPHQL_URL = "https://api.github.com/graphql";
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
 async function githubFetch(
@@ -82,6 +83,137 @@ async function fetchAllPages(endpoint: string, token?: string, maxPages: number 
   return results;
 }
 
+// GraphQL helper for contribution data
+async function githubGraphQL(query: string, variables: any, token?: string): Promise<any> {
+  const authToken = token || GITHUB_TOKEN;
+  
+  if (!authToken) {
+    throw new Error("No GitHub token available for GraphQL.");
+  }
+
+  const res = await fetch(GITHUB_GRAPHQL_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ query, variables }),
+    cache: 'no-store',
+  });
+
+  if (!res.ok) {
+    throw new Error(`GraphQL request failed: ${res.statusText}`);
+  }
+
+  const data = await res.json();
+  
+  if (data.errors) {
+    throw new Error(`GraphQL errors: ${JSON.stringify(data.errors)}`);
+  }
+
+  return data.data;
+}
+
+// Calculate longest commit streak using GraphQL contribution calendar
+async function calculateCommitStreak(username: string, year: number, token?: string): Promise<number> {
+  const query = `
+    query($login: String!, $from: DateTime!, $to: DateTime!) {
+      user(login: $login) {
+        contributionsCollection(from: $from, to: $to) {
+          contributionCalendar {
+            weeks {
+              contributionDays {
+                date
+                contributionCount
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  const variables = {
+    login: username,
+    from: `${year}-01-01T00:00:00Z`,
+    to: `${year}-12-31T23:59:59Z`,
+  };
+
+  try {
+    const data = await githubGraphQL(query, variables, token);
+    const weeks = data.user.contributionsCollection.contributionCalendar.weeks;
+
+    // Extract dates with contributions
+    const contributionDates: Date[] = [];
+    for (const week of weeks) {
+      for (const day of week.contributionDays) {
+        if (day.contributionCount > 0) {
+          contributionDates.push(new Date(day.date));
+        }
+      }
+    }
+
+    if (contributionDates.length === 0) return 0;
+
+    // Sort dates
+    contributionDates.sort((a, b) => a.getTime() - b.getTime());
+
+    // Calculate longest streak
+    let longest = 1;
+    let current = 1;
+
+    for (let i = 1; i < contributionDates.length; i++) {
+      const prevDate = contributionDates[i - 1];
+      const currDate = contributionDates[i];
+      
+      // Calculate difference in days
+      const daysDiff = Math.floor((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (daysDiff === 1) {
+        current++;
+        longest = Math.max(longest, current);
+      } else if (daysDiff > 1) {
+        current = 1;
+      }
+      // If daysDiff === 0, skip (same day, already counted)
+    }
+
+    return longest;
+  } catch (error) {
+    console.error("Error calculating commit streak:", error);
+    return 0; // Fallback if GraphQL fails
+  }
+}
+
+// Get total contributions for a year using GraphQL
+async function getTotalContributions(username: string, year: number, token?: string): Promise<number> {
+  const query = `
+    query($login: String!, $from: DateTime!, $to: DateTime!) {
+      user(login: $login) {
+        contributionsCollection(from: $from, to: $to) {
+          contributionCalendar {
+            totalContributions
+          }
+        }
+      }
+    }
+  `;
+
+  const variables = {
+    login: username,
+    from: `${year}-01-01T00:00:00Z`,
+    to: `${year}-12-31T23:59:59Z`,
+  };
+
+  try {
+    const data = await githubGraphQL(query, variables, token);
+    return data.user.contributionsCollection.contributionCalendar.totalContributions;
+  } catch (error) {
+    console.error("Error getting total contributions:", error);
+    return 0;
+  }
+}
+
 export async function getGithubData(username: string, year: number, userToken?: string) {
   const queryDateRange = `${year}-01-01..${year}-12-31`;
 
@@ -140,11 +272,10 @@ export async function getGithubData(username: string, year: number, userToken?: 
       0
     );
 
-    // Get commit counts per repo using contributors endpoint (like Python example)
+    // Get commit counts per repo using contributors endpoint
     console.log("Fetching commit counts...");
     const repoCommitData: Array<{ repo: string; commits: number; language: string | null }> = [];
     let totalCommits = 0;
-    const allCommitDates: Date[] = [];
 
     // Process repos in batches to avoid overwhelming the API
     const batchSize = 10;
@@ -167,23 +298,6 @@ export async function getGithubData(username: string, year: number, userToken?: 
             });
             
             totalCommits += commitCount;
-
-            // Fetch commit dates for streak calculation (limit to 100 per repo)
-            if (commitCount > 0) {
-              const commits = await githubFetch(
-                `/repos/${repo.full_name}/commits?author=${username}&per_page=100`,
-                userToken
-              ).catch(() => []);
-              
-              if (Array.isArray(commits)) {
-                commits.forEach((commit: any) => {
-                  const dateStr = commit.commit?.author?.date;
-                  if (dateStr) {
-                    allCommitDates.push(new Date(dateStr));
-                  }
-                });
-              }
-            }
           }
         } catch (error) {
           console.log(`Skipping ${repo.name}:`, error);
@@ -198,30 +312,15 @@ export async function getGithubData(username: string, year: number, userToken?: 
       .filter(r => r.commits > 0)
       .sort((a, b) => b.commits - a.commits)[0] || null;
 
-    // Calculate longest commit streak
-    let longestStreak = 0;
-    if (allCommitDates.length > 0) {
-      const sortedDates = allCommitDates
-        .map(d => d.toISOString().split('T')[0]) // Get just the date part
-        .filter((v, i, a) => a.indexOf(v) === i) // Remove duplicates
-        .sort();
-
-      let currentStreak = 1;
-      longestStreak = 1;
-
-      for (let i = 1; i < sortedDates.length; i++) {
-        const prevDate = new Date(sortedDates[i - 1]);
-        const currDate = new Date(sortedDates[i]);
-        const daysDiff = Math.floor((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
-
-        if (daysDiff === 1) {
-          currentStreak++;
-          longestStreak = Math.max(longestStreak, currentStreak);
-        } else {
-          currentStreak = 1;
-        }
-      }
-    }
+    // Calculate longest commit streak using GraphQL (more accurate)
+    console.log("Calculating commit streak and total contributions with GraphQL...");
+    const [longestStreak, totalCommitsFromGraphQL] = await Promise.all([
+      calculateCommitStreak(username, year, userToken),
+      getTotalContributions(username, year, userToken),
+    ]);
+    
+    // Use GraphQL total if available, otherwise fall back to REST API count
+    totalCommits = totalCommitsFromGraphQL > 0 ? totalCommitsFromGraphQL : totalCommits;
 
     // Fetch language data
     const languageMap: Record<string, number> = {};
