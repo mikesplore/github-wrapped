@@ -57,19 +57,30 @@ export default async function RoastPage({ params }: RoastPageProps) {
     });
     slides = result.slides;
   } catch (error) {
+    console.error("AI Generation Error:", error);
+    
     if (error instanceof Error) {
-      // Check if it's a Gemini/AI error
-      if (error.message.includes('quota') || 
-          error.message.includes('RESOURCE_EXHAUSTED') ||
-          error.message.includes('429')) {
-        throw new Error("Gemini AI quota exceeded. Our AI roasting service has reached its daily limit. Please try again in a few hours or tomorrow.");
-      } else if (error.message.includes('API key')) {
-        throw new Error("Gemini AI configuration error. Please contact support.");
+      const errorMsg = error.message.toLowerCase();
+      
+      // Check for specific Gemini errors
+      if (errorMsg.includes('overloaded') || errorMsg.includes('503')) {
+        throw new Error("🔥 Gemini AI is overloaded! The model is experiencing high traffic right now. Please wait a few minutes and try again. Your roast will be worth the wait!");
+      } else if (errorMsg.includes('quota') || 
+                 errorMsg.includes('resource_exhausted') ||
+                 errorMsg.includes('429')) {
+        throw new Error("💀 Gemini AI quota exceeded! We've hit the daily limit for roasting. Please try again in a few hours or tomorrow. The AI needs a break from being so savage!");
+      } else if (errorMsg.includes('api key') || errorMsg.includes('401')) {
+        throw new Error("🔑 Gemini AI authentication failed. Please contact support - our roasting credentials need refreshing!");
+      } else if (errorMsg.includes('rate limit')) {
+        throw new Error("⚡ Gemini AI rate limit reached. Too many roasts happening at once! Wait a minute and try again.");
+      } else if (errorMsg.includes('timeout')) {
+        throw new Error("⏱️ Gemini AI request timed out. The AI is thinking too hard about how to roast you. Try again!");
       } else {
-        throw new Error(`AI generation failed: ${error.message}`);
+        // Pass through the actual error message from Gemini
+        throw new Error(`🤖 Gemini AI Error: ${error.message}`);
       }
     }
-    throw new Error("Failed to generate roast slides. The AI might be overwhelmed.");
+    throw new Error("Failed to generate roast slides. The AI might be overwhelmed with your epic coding stats!");
   }
 
   if (!slides || slides.length === 0) {

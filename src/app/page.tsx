@@ -1,6 +1,7 @@
 import { generateReport } from "@/app/actions";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -95,14 +96,14 @@ export default async function Home() {
                   ))}
                 </SelectContent>
               </Select>
-              <Button 
-                type="submit" 
+              <SubmitButton 
                 size="lg" 
                 className="w-full h-12 text-lg font-bold bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-500 hover:to-blue-500"
+                loadingText="Generating Roast..."
               >
                 <Flame className="mr-2 h-5 w-5" />
                 Roast My Year
-              </Button>
+              </SubmitButton>
             </form>
             
             <p className="text-xs text-center text-muted-foreground">
@@ -131,14 +132,14 @@ export default async function Home() {
                   ))}
                 </SelectContent>
               </Select>
-              <Button 
-                type="submit" 
+              <SubmitButton 
                 size="lg" 
                 className="w-full h-12 text-lg font-bold bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-500 hover:to-blue-500"
+                loadingText="Generating Roast..."
               >
                 <Flame className="mr-2 h-5 w-5" />
                 Roast Me
-              </Button>
+              </SubmitButton>
               <p className="text-xs text-center text-muted-foreground">
                 Public repositories only
               </p>

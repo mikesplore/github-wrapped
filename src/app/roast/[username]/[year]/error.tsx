@@ -1,9 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { AlertCircle, RefreshCw, Home, Clock } from "lucide-react";
+import { AlertCircle, RefreshCw, Home, Clock, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function Error({
   error,
@@ -12,9 +12,17 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const [isRetrying, setIsRetrying] = useState(false);
+  
   useEffect(() => {
     console.error(error);
   }, [error]);
+
+  const handleRetry = () => {
+    setIsRetrying(true);
+    reset();
+    // Reset will reload the page, so no need to set isRetrying back to false
+  };
 
   // Determine error type
   const isRateLimitError = 
@@ -134,11 +142,21 @@ export default function Error({
         {/* Action buttons */}
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Button 
-            onClick={reset}
+            onClick={handleRetry}
+            disabled={isRetrying}
             className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-500 hover:to-blue-500"
           >
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Try Again
+            {isRetrying ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Retrying...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Try Again
+              </>
+            )}
           </Button>
           <Button variant="outline" asChild>
             <Link href="/">
