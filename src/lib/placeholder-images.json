@@ -1,3 +1,64 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "intro",
+      "description": "Abstract geometric shapes for intro slide",
+      "imageUrl": "https://images.unsplash.com/photo-1579547621113-e4bb2a19bdd6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8YWJzdHJhY3QlMjBnZW9tZXRyaWN8ZW58MHx8fHwxNzY0NzY3ODAwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract geometric"
+    },
+    {
+      "id": "commit",
+      "description": "Code on a screen for commit slide",
+      "imageUrl": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjb2RlJTIwc2NyZWVufGVufDB8fHx8MTc2NDc2ODkxN3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "code screen"
+    },
+    {
+      "id": "language",
+      "description": "A matrix of programming language logos",
+      "imageUrl": "https://images.unsplash.com/photo-1662638600476-d563fffbb072?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwcm9ncmFtbWluZyUyMGxhbmd1YWdlc3xlbnwwfHx8fDE3NjQ4MzQ3MjZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "programming languages"
+    },
+    {
+      "id": "repo",
+      "description": "A digital graveyard for repos",
+      "imageUrl": "https://images.unsplash.com/photo-1731846780511-ade8cbc81a9c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxkaWdpdGFsJTIwZ3JhdmV5YXJkfGVufDB8fHx8MTc2NDgzNDcyNnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "digital graveyard"
+    },
+    {
+      "id": "pr",
+      "description": "A complex network diagram for PRs and issues",
+      "imageUrl": "https://images.unsplash.com/photo-1618650551428-199e32d38059?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxuZXR3b3JrJTIwZGlhZ3JhbXxlbnwwfHx8fDE3NjQ3NzA5NjV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "network diagram"
+    },
+    {
+      "id": "star",
+      "description": "A galaxy of stars for starred repos",
+      "imageUrl": "https://images.unsplash.com/photo-1467685790346-20bfe73a81f0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxnYWxheHklMjBzdGFyc3xlbnwwfHx8fDE3NjQ4MDczMzV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "galaxy stars"
+    },
+    {
+      "id": "activity",
+      "description": "A futuristic dashboard for activity analysis",
+      "imageUrl": "https://images.unsplash.com/photo-1752959828455-7bdeb06198b4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxmdXR1cmlzdGljJTIwZGFzaGJvYXJkfGVufDB8fHx8MTc2NDc1MTI4Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "futuristic dashboard"
+    },
+    {
+      "id": "personality",
+      "description": "A stylized portrait for dev personality",
+      "imageUrl": "https://images.unsplash.com/photo-1760292421911-964db7e9fca5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzdHlsaXplZCUyMHBvcnRyYWl0fGVufDB8fHx8MTc2NDgzNDcyNnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "stylized portrait"
+    },
+    {
+      "id": "fallback",
+      "description": "A generic fallback image",
+      "imageUrl": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxhYnN0cmFjdCUyMHRlY2h8ZW58MHx8fHwxNzY0ODI5ODgxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract tech"
+    },
+    {
+      "id": "outro",
+      "description": "A final outro image",
+      "imageUrl": "https://images.unsplash.com/photo-1730846647452-009c1a50fafc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxmaXJld29ya3MlMjBuaWdodHxlbnwwfHx8fDE3NjQ4MjQwMzl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fireworks night"
+    }
+  ]
 }
