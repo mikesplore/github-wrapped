@@ -48,11 +48,29 @@ export default async function RoastPage({ params }: RoastPageProps) {
     throw new Error("Could not retrieve GitHub data.");
   }
   
-  const { slides } = await generateWrappedSlides({
-    githubData: JSON.stringify(githubData, null, 2),
-    username,
-    year,
-  });
+  let slides;
+  try {
+    const result = await generateWrappedSlides({
+      githubData: JSON.stringify(githubData, null, 2),
+      username,
+      year,
+    });
+    slides = result.slides;
+  } catch (error) {
+    if (error instanceof Error) {
+      // Check if it's a Gemini/AI error
+      if (error.message.includes('quota') || 
+          error.message.includes('RESOURCE_EXHAUSTED') ||
+          error.message.includes('429')) {
+        throw new Error("Gemini AI quota exceeded. Our AI roasting service has reached its daily limit. Please try again in a few hours or tomorrow.");
+      } else if (error.message.includes('API key')) {
+        throw new Error("Gemini AI configuration error. Please contact support.");
+      } else {
+        throw new Error(`AI generation failed: ${error.message}`);
+      }
+    }
+    throw new Error("Failed to generate roast slides. The AI might be overwhelmed.");
+  }
 
   if (!slides || slides.length === 0) {
     throw new Error("The AI failed to generate slides. It might be speechless for once.");

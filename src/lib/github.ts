@@ -27,13 +27,36 @@ async function githubFetch(
 
   if (!res.ok) {
     const errorBody = await res.json().catch(() => ({ message: "Unknown error" }));
-    console.error("GitHub API Error:", errorBody.message);
+    console.error("GitHub API Error:", {
+      status: res.status,
+      endpoint,
+      message: errorBody.message,
+      remaining: res.headers.get('x-ratelimit-remaining'),
+      reset: res.headers.get('x-ratelimit-reset')
+    });
+    
     let message = `GitHub API request failed for ${endpoint}: ${errorBody.message}`;
+    
     if (res.status === 401) {
-      message = "GitHub token is invalid or has expired. Please login again.";
+      message = "GitHub authentication failed. Please logout and login again to refresh your token.";
     } else if (res.status === 403) {
-        message = "GitHub API rate limit exceeded. Please wait a while before trying again."
+      const remaining = res.headers.get('x-ratelimit-remaining');
+      const resetTime = res.headers.get('x-ratelimit-reset');
+      
+      if (remaining === '0') {
+        const resetDate = resetTime ? new Date(parseInt(resetTime) * 1000) : null;
+        const minutesUntilReset = resetDate 
+          ? Math.ceil((resetDate.getTime() - Date.now()) / 60000)
+          : 'unknown';
+        
+        message = `GitHub API rate limit exceeded. Your rate limit will reset in approximately ${minutesUntilReset} minutes. Try logging in with GitHub for higher limits (5,000 requests/hour vs 60 for guests).`;
+      } else {
+        message = "GitHub API access forbidden. This might be due to permissions or rate limiting.";
+      }
+    } else if (res.status === 404) {
+      message = `User or resource not found. Please check the username and try again.`;
     }
+    
     throw new Error(message);
   }
 
