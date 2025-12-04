@@ -21,13 +21,27 @@ export function AudioPlayer({ track, autoPlay = false }: AudioPlayerProps) {
       audioRef.current.volume = volume;
       
       if (autoPlay) {
-        // Try to autoplay, but handle if browser blocks it
-        audioRef.current.play().catch(() => {
-          setIsPlaying(false);
-        });
+        // Try to autoplay with user interaction fallback
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            // Auto-play was prevented, user needs to interact first
+            setIsPlaying(false);
+          });
+        }
       }
     }
   }, [autoPlay, volume]);
+
+  // Handle audio end - restart for continuous playback
+  const handleAudioEnd = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {
+        setIsPlaying(false);
+      });
+    }
+  };
 
   const togglePlay = () => {
     if (audioRef.current) {
@@ -55,7 +69,7 @@ export function AudioPlayer({ track, autoPlay = false }: AudioPlayerProps) {
         ref={audioRef}
         src={track.url}
         loop
-        onEnded={() => setIsPlaying(false)}
+        onEnded={handleAudioEnd}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
       />

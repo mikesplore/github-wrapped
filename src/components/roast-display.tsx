@@ -4,8 +4,6 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
   type CarouselApi,
 } from "@/components/ui/carousel";
 import {
@@ -13,7 +11,6 @@ import {
   Flame,
   GitCommit,
   GitPullRequest,
-  Github,
   Heart,
   Home,
   MessageSquare,
@@ -21,17 +18,13 @@ import {
   Star,
   Trash2,
   Trophy,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { Card } from "./ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Progress } from "./ui/progress";
 import { AudioPlayer } from "./audio-player";
 import { selectMusicForUser, type UserStats } from "@/lib/music-selector";
 
@@ -178,16 +171,16 @@ export default function RoastDisplay({
                         src={slide.image.imageUrl}
                         alt={slide.image.description}
                         fill
-                        className="object-cover opacity-20"
+                        className="object-cover opacity-40"
                         data-ai-hint={slide.image.imageHint}
                         priority={index === 0}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/90 to-background/70" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/70 to-background/40" />
                     </>
                   )}
 
-                  {/* Content - with padding to avoid button overlap */}
-                  <div className="relative z-10 flex h-full w-full max-w-4xl flex-col items-center justify-center px-20 py-12 text-center sm:px-24 md:px-32 lg:px-40">
+                  {/* Content - optimized for mobile */}
+                  <div className="relative z-10 flex h-full w-full max-w-4xl flex-col items-center justify-center px-6 py-12 text-center sm:px-12 md:px-20 lg:px-32">
                     <div className="animate-in fade-in-0 slide-in-from-bottom-4 duration-700 space-y-6 sm:space-y-8">
                       {/* Icon */}
                       <div className="flex items-center justify-center">
@@ -212,31 +205,7 @@ export default function RoastDisplay({
             ))}
           </CarouselContent>
 
-          {/* Navigation buttons - Desktop */}
-          <div className="hidden md:block">
-            <CarouselPrevious className="absolute left-4 top-1/2 h-12 w-12 -translate-y-1/2 border-2 bg-background/80 backdrop-blur-sm hover:bg-background lg:left-8" />
-            <CarouselNext className="absolute right-4 top-1/2 h-12 w-12 -translate-y-1/2 border-2 bg-background/80 backdrop-blur-sm hover:bg-background lg:right-8" />
-          </div>
-
-          {/* Navigation buttons - Mobile (touch-friendly, positioned at edges) */}
-          <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between pointer-events-none md:hidden">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-14 w-14 touch-manipulation rounded-full bg-background/30 backdrop-blur-sm hover:bg-background/60 pointer-events-auto ml-2"
-              onClick={() => api?.scrollPrev()}
-            >
-              <ChevronLeft className="h-6 w-6" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-14 w-14 touch-manipulation rounded-full bg-background/30 backdrop-blur-sm hover:bg-background/60 pointer-events-auto mr-2"
-              onClick={() => api?.scrollNext()}
-            >
-              <ChevronRight className="h-6 w-6" />
-            </Button>
-          </div>
+          {/* Navigation removed - swipe/touch only */}
         </Carousel>
       </div>
 
@@ -246,12 +215,12 @@ export default function RoastDisplay({
           Slide {current} of {count}
         </p>
         <p className="mt-1 text-xs text-muted-foreground/70">
-          Swipe or use arrow keys to navigate
+          Swipe to navigate
         </p>
       </div>
 
       {/* Audio Player */}
-      <AudioPlayer track={musicTrack} autoPlay={false} />
+      <AudioPlayer track={musicTrack} autoPlay={true} />
     </div>
   );
 }
