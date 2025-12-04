@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { AlertCircle, RefreshCw, Home, Clock, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 
-export default function ErrorPage() {
+function ErrorContent() {
   const searchParams = useSearchParams();
   const errorMessage = searchParams.get("message") || "An unexpected error occurred";
   const username = searchParams.get("username");
@@ -149,5 +149,19 @@ export default function ErrorPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function ErrorPage() {
+  return (
+    <Suspense 
+      fallback={
+        <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-red-500/10 via-background to-orange-500/10">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      }
+    >
+      <ErrorContent />
+    </Suspense>
   );
 }
