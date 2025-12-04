@@ -1,0 +1,153 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+import { AlertCircle, RefreshCw, Home, Clock, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useState } from "react";
+
+export default function ErrorPage() {
+  const searchParams = useSearchParams();
+  const errorMessage = searchParams.get("message") || "An unexpected error occurred";
+  const username = searchParams.get("username");
+  const year = searchParams.get("year");
+  const errorType = searchParams.get("type") || "unknown";
+  const [isRetrying, setIsRetrying] = useState(false);
+
+  const handleRetry = () => {
+    setIsRetrying(true);
+    if (username && year) {
+      window.location.href = `/roast/${username}/${year}`;
+    }
+  };
+
+  // Determine error type from message
+  const isRateLimitError = 
+    errorMessage.toLowerCase().includes("rate limit") || 
+    errorMessage.toLowerCase().includes("403");
+  
+  const isGeminiError = 
+    errorType === "gemini" ||
+    errorMessage.toLowerCase().includes("gemini") ||
+    errorMessage.toLowerCase().includes("ai") ||
+    errorMessage.toLowerCase().includes("overloaded") ||
+    errorMessage.toLowerCase().includes("quota");
+
+  const isAuthError = 
+    errorMessage.toLowerCase().includes("401") ||
+    errorMessage.toLowerCase().includes("token") ||
+    errorMessage.toLowerCase().includes("unauthorized") ||
+    errorMessage.toLowerCase().includes("authentication");
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-red-500/10 via-background to-orange-500/10 p-4">
+      {/* Animated background */}
+      <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-red-500/5 via-transparent to-transparent" />
+      
+      <div className="w-full max-w-md space-y-6 text-center">
+        {/* Error icon */}
+        <div className="flex justify-center">
+          <div className="rounded-full bg-red-500/10 p-6">
+            {isRateLimitError ? (
+              <Clock className="h-16 w-16 text-red-500" />
+            ) : (
+              <AlertCircle className="h-16 w-16 text-red-500" />
+            )}
+          </div>
+        </div>
+
+        {/* Error title */}
+        <div className="space-y-2">
+          <h1 className="font-headline text-4xl font-black">
+            {isRateLimitError ? "Rate Limit Reached" : isGeminiError ? "AI Service Busy" : "Oops! Something Broke"}
+          </h1>
+          <p className="text-xl text-muted-foreground">
+            {isRateLimitError 
+              ? "Too many requests, we need a breather!" 
+              : isGeminiError
+              ? "Our AI is taking a quick break"
+              : "Even our roasts have limits"}
+          </p>
+        </div>
+
+        {/* Error details - ACTUAL MESSAGE */}
+        <div className="rounded-lg border bg-card/50 backdrop-blur-sm p-6 space-y-4">
+          <div className="space-y-3 text-left">
+            <p className="text-sm font-semibold text-red-400">Error Details:</p>
+            <p className="text-sm text-muted-foreground leading-relaxed break-words">
+              {errorMessage}
+            </p>
+          </div>
+          
+          {isRateLimitError && (
+            <div className="rounded-md bg-blue-500/10 border border-blue-500/20 p-4 space-y-2">
+              <p className="text-sm font-semibold text-blue-400">💡 How to Fix:</p>
+              <ul className="text-sm text-muted-foreground space-y-2 ml-4 list-disc">
+                <li><strong>Login with GitHub</strong> - Get 5,000 requests/hour instead of 60</li>
+                <li><strong>Wait for rate limit reset</strong> - Check the time mentioned above</li>
+                <li><strong>Try during off-peak hours</strong> - When traffic is lower</li>
+              </ul>
+            </div>
+          )}
+          
+          {isGeminiError && (
+            <div className="rounded-md bg-blue-500/10 border border-blue-500/20 p-4 space-y-2">
+              <p className="text-sm font-semibold text-blue-400">💡 What to Do:</p>
+              <p className="text-sm text-muted-foreground ml-4">
+                Wait a few minutes and retry. AI services typically recover quickly. Your roast will be worth the wait!
+              </p>
+            </div>
+          )}
+          
+          {isAuthError && (
+            <div className="rounded-md bg-blue-500/10 border border-blue-500/20 p-4 space-y-2">
+              <p className="text-sm font-semibold text-blue-400">💡 Solution:</p>
+              <p className="text-sm text-muted-foreground ml-4">
+                Please logout and login again to refresh your GitHub authentication token.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+          {username && year && (
+            <Button 
+              onClick={handleRetry}
+              disabled={isRetrying}
+              className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-500 hover:to-blue-500"
+            >
+              {isRetrying ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Retrying...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Try Again
+                </>
+              )}
+            </Button>
+          )}
+          <Button variant="outline" asChild>
+            <Link href="/">
+              <Home className="mr-2 h-4 w-4" />
+              Go Home
+            </Link>
+          </Button>
+        </div>
+
+        {/* Helpful tip */}
+        <p className="text-xs text-muted-foreground">
+          {isRateLimitError 
+            ? "Tip: Login with GitHub for higher rate limits and private repo access"
+            : isGeminiError
+            ? "High demand = Quality roasts! Worth the wait 🔥"
+            : "If this persists, please try again in a few minutes"
+          }
+        </p>
+      </div>
+    </div>
+  );
+}
