@@ -48,9 +48,11 @@ export async function getGithubData(username: string, year: number) {
   try {
     const user = await githubFetch(`/users/${username}`);
 
+    // Fetch all repos including private ones with affiliation parameter
     const [
       commitResponse,
-      repoResponse,
+      publicRepos,
+      privateRepos,
       prResponse,
       issueResponse,
       starredResponse,
@@ -58,7 +60,9 @@ export async function getGithubData(username: string, year: number) {
       githubFetch(
         `/search/commits?q=author:${username}+author-date:${queryDateRange}&per_page=1`
       ),
-      githubFetch(`/users/${username}/repos?per_page=100&sort=pushed&type=all`),
+      githubFetch(`/users/${username}/repos?per_page=100&sort=pushed&type=public`),
+      // Fetch private repos using authenticated endpoint
+      githubFetch(`/user/repos?per_page=100&sort=pushed&type=private&affiliation=owner,collaborator,organization_member`).catch(() => []),
       githubFetch(
         `/search/issues?q=author:${username}+is:pr+created:${queryDateRange}&per_page=1`
       ),
@@ -68,10 +72,17 @@ export async function getGithubData(username: string, year: number) {
       githubFetch(`/users/${username}/starred?per_page=100`),
     ]);
 
+    // Combine public and private repos, filtering private repos to only include the target user's
+    const allPrivateRepos = Array.isArray(privateRepos) 
+      ? privateRepos.filter((repo: any) => repo.owner.login === username)
+      : [];
+    const repoResponse = [...publicRepos, ...allPrivateRepos];
+
+    // Fetch language data from more repos for better accuracy
     const languagePromises = repoResponse
-      .slice(0, 20) // Limit to 20 repos to avoid rate limits
+      .slice(0, 50) // Increased from 20 to 50 for better accuracy
       .map((repo: any) =>
-        githubFetch(repo.languages_url.replace(GITHUB_API_URL, ""))
+        githubFetch(repo.languages_url.replace(GITHUB_API_URL, "")).catch(() => ({}))
       );
     const languagesData = await Promise.all(languagePromises);
 
@@ -84,18 +95,21 @@ export async function getGithubData(username: string, year: number) {
     
     const sortedLanguages = Object.entries(languageMap).sort(([, a], [, b]) => b - a);
     
-    // Simplified activity history
+    // Enhanced activity history with more metrics
     const activityHistory = {
         totalCommits: commitResponse.total_count,
         totalPRs: prResponse.total_count,
         totalIssues: issueResponse.total_count,
         reposContributedTo: new Set(commitResponse.items?.map((c: any) => c.repository.full_name)).size,
+        publicRepos: publicRepos.length,
+        privateRepos: allPrivateRepos.length,
+        totalRepos: repoResponse.length,
     };
 
     const repoGraveyard = repoResponse.filter((repo: any) => {
         const lastPushed = new Date(repo.pushed_at);
         return repo.owner.login === username && lastPushed.getFullYear() < year && repo.fork === false;
-    }).slice(0, 5);
+    }).slice(0, 10); // Increased to 10 for more comprehensive data
 
 
     return {

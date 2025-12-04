@@ -53,7 +53,7 @@ export default async function RoastPage({ params }: RoastPageProps) {
   }
 
   return (
-    <main className="container mx-auto flex min-h-screen max-w-4xl flex-col items-center justify-center p-4">
+    <main className="h-screen w-full overflow-hidden">
       <RoastDisplay
         slides={slides}
         username={username}
