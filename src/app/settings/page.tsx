@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings, Eye, EyeOff, Check, X } from "lucide-react";
+import { Settings, Eye, EyeOff, Check, X, Loader2, CheckCircle, XCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { validateGitHubToken } from "@/lib/github-client";
+import { validateGeminiKey } from "@/lib/gemini-client";
 
 export default function SettingsPage() {
   const [githubToken, setGithubToken] = useState("");
@@ -14,6 +16,10 @@ export default function SettingsPage() {
   const [showGithubToken, setShowGithubToken] = useState(false);
   const [showGeminiKey, setShowGeminiKey] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [validating, setValidating] = useState(false);
+  const [githubValid, setGithubValid] = useState<boolean | null>(null);
+  const [geminiValid, setGeminiValid] = useState<boolean | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
     // Load from localStorage
@@ -22,6 +28,46 @@ export default function SettingsPage() {
     setGithubToken(savedGithubToken);
     setGeminiKey(savedGeminiKey);
   }, []);
+
+  const handleValidate = async () => {
+    setValidating(true);
+    setValidationError(null);
+    setGithubValid(null);
+    setGeminiValid(null);
+
+    try {
+      // Validate GitHub token if provided
+      if (githubToken) {
+        const isValid = await validateGitHubToken(githubToken);
+        setGithubValid(isValid);
+        if (!isValid) {
+          setValidationError("GitHub token is invalid");
+        }
+      }
+
+      // Validate Gemini key if provided
+      if (geminiKey) {
+        const isValid = await validateGeminiKey(geminiKey);
+        setGeminiValid(isValid);
+        if (!isValid) {
+          setValidationError("Gemini API key is invalid");
+        }
+      }
+
+      // If both are valid (or not provided), save
+      if (
+        (!githubToken || githubValid !== false) &&
+        (!geminiKey || geminiValid !== false)
+      ) {
+        handleSave();
+      }
+    } catch (error) {
+      setValidationError("Error validating keys. Please try again.");
+      console.error("Validation error:", error);
+    } finally {
+      setValidating(false);
+    }
+  };
 
   const handleSave = () => {
     // Save to localStorage
@@ -44,6 +90,9 @@ export default function SettingsPage() {
   const handleClear = () => {
     setGithubToken("");
     setGeminiKey("");
+    setGithubValid(null);
+    setGeminiValid(null);
+    setValidationError(null);
     localStorage.removeItem("user_github_token");
     localStorage.removeItem("user_gemini_key");
   };
@@ -106,16 +155,28 @@ export default function SettingsPage() {
                   type={showGithubToken ? "text" : "password"}
                   placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
                   value={githubToken}
-                  onChange={(e) => setGithubToken(e.target.value)}
-                  className="pr-10"
+                  onChange={(e) => {
+                    setGithubToken(e.target.value);
+                    setGithubValid(null);
+                  }}
+                  className="pr-20"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowGithubToken(!showGithubToken)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showGithubToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                  {githubValid !== null && (
+                    githubValid ? (
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <XCircle className="h-4 w-4 text-red-500" />
+                    )
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShowGithubToken(!showGithubToken)}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    {showGithubToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
               <p className="text-xs text-muted-foreground">
                 Required scopes: <code className="bg-muted px-1 py-0.5 rounded">repo</code>, <code className="bg-muted px-1 py-0.5 rounded">read:user</code>
@@ -159,16 +220,28 @@ export default function SettingsPage() {
                   type={showGeminiKey ? "text" : "password"}
                   placeholder="AIzaSyxxxxxxxxxxxxxxxxxxxxxxxx"
                   value={geminiKey}
-                  onChange={(e) => setGeminiKey(e.target.value)}
-                  className="pr-10"
+                  onChange={(e) => {
+                    setGeminiKey(e.target.value);
+                    setGeminiValid(null);
+                  }}
+                  className="pr-20"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowGeminiKey(!showGeminiKey)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showGeminiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                  {geminiValid !== null && (
+                    geminiValid ? (
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <XCircle className="h-4 w-4 text-red-500" />
+                    )
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShowGeminiKey(!showGeminiKey)}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    {showGeminiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
               <p className="text-xs text-muted-foreground">
                 Free tier: 15 requests/minute, 1,500 requests/day
@@ -187,19 +260,34 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
+        {/* Validation Error */}
+        {validationError && (
+          <Card className="border-red-500/20 bg-red-500/5">
+            <CardContent className="pt-6">
+              <p className="text-sm text-red-400">{validationError}</p>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Actions */}
         <div className="flex gap-3">
           <Button 
-            onClick={handleSave}
+            onClick={handleValidate}
+            disabled={validating || (!githubToken && !geminiKey)}
             className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-500 hover:to-blue-500"
           >
-            {saved ? (
+            {validating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Validating...
+              </>
+            ) : saved ? (
               <>
                 <Check className="mr-2 h-4 w-4" />
                 Saved!
               </>
             ) : (
-              "Save Settings"
+              "Validate & Save"
             )}
           </Button>
           <Button 
