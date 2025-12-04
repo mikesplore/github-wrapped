@@ -27,6 +27,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AudioPlayer } from "./audio-player";
 import { selectMusicForUser, type UserStats } from "@/lib/music-selector";
+import { MarkdownRenderer } from "./markdown-renderer";
 
 type RoastDisplayProps = {
   slides: string[];
@@ -155,12 +156,12 @@ export default function RoastDisplay({
       </div>
 
       {/* Main content area - Full screen slides */}
-      <div className="relative flex-1 overflow-hidden">
+      <div className="relative flex-1 overflow-x-hidden overflow-y-auto">
         <Carousel setApi={setApi} className="h-full w-full" opts={{ loop: false }}>
           <CarouselContent className="h-full">
             {slideData.map((slide, index) => (
               <CarouselItem key={index} className="h-full">
-                <div className="relative flex h-full w-full items-center justify-center p-0">
+                <div className="relative flex min-h-full w-full items-center justify-center p-0">
                   {/* Background gradient based on slide type */}
                   <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-background to-primary/5" />
                   
@@ -180,8 +181,8 @@ export default function RoastDisplay({
                   )}
 
                   {/* Content - optimized for mobile */}
-                  <div className="relative z-10 flex h-full w-full max-w-4xl flex-col items-center justify-center px-6 py-12 text-center sm:px-12 md:px-20 lg:px-32">
-                    <div className="animate-in fade-in-0 slide-in-from-bottom-4 duration-700 space-y-6 sm:space-y-8">
+                  <div className="relative z-10 flex min-h-full w-full max-w-4xl flex-col items-center justify-center px-6 py-12 text-center sm:px-12 md:px-20 lg:px-32">
+                    <div className="animate-in fade-in-0 slide-in-from-bottom-4 duration-700 space-y-6 sm:space-y-8 w-full">
                       {/* Icon */}
                       <div className="flex items-center justify-center">
                         <div className="rounded-full bg-accent/10 p-4 text-accent sm:p-5 md:p-6">
@@ -194,10 +195,13 @@ export default function RoastDisplay({
                         {slide.title}
                       </h2>
 
-                      {/* Description */}
-                      <p className="mx-auto max-w-2xl whitespace-pre-wrap text-base leading-relaxed text-muted-foreground sm:text-lg md:text-xl lg:text-2xl">
-                        {slide.description}
-                      </p>
+                      {/* Description - Now with Markdown rendering and proper scrolling */}
+                      <div className="mx-auto max-w-2xl w-full">
+                        <MarkdownRenderer 
+                          content={slide.description}
+                          className="text-base sm:text-lg md:text-xl lg:text-2xl"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>

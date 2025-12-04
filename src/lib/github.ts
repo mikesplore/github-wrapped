@@ -16,12 +16,10 @@ async function githubFetch(
     ...options,
     headers: {
       ...options.headers,
-      Authorization: `Bearer ${GITHUB_TOKEN}`,
-      "X-GitHub-Api-Version": "2022-11-28",
+      Authorization: `token ${GITHUB_TOKEN}`,
       Accept: "application/vnd.github+json",
     },
-    // Cache for 1 hour to manage rate limits during development/repeated requests
-    next: { revalidate: 3600 },
+    cache: 'no-store', // Disable caching for fresh data
   });
 
   if (!res.ok) {
@@ -39,8 +37,8 @@ async function githubFetch(
   return res.json();
 }
 
-// Helper to fetch all pages of a paginated endpoint
-async function fetchAllPages(endpoint: string, maxPages: number = 5): Promise<any[]> {
+// Helper to fetch all pages
+async function fetchAllPages(endpoint: string, maxPages: number = 10): Promise<any[]> {
   const results: any[] = [];
   let page = 1;
   
@@ -51,7 +49,7 @@ async function fetchAllPages(endpoint: string, maxPages: number = 5): Promise<an
     if (!Array.isArray(data) || data.length === 0) break;
     results.push(...data);
     
-    if (data.length < 100) break; // No more pages
+    if (data.length < 100) break;
     page++;
   }
   
@@ -59,24 +57,25 @@ async function fetchAllPages(endpoint: string, maxPages: number = 5): Promise<an
 }
 
 export async function getGithubData(username: string, year: number) {
-  const dateRange = `${year}-01-01T00:00:00Z..${year}-12-31T23:59:59Z`;
   const queryDateRange = `${year}-01-01..${year}-12-31`;
 
   try {
-    // Fetch user info first
+    // Fetch user info
     const user = await githubFetch(`/users/${username}`);
 
-    // Fetch all repos (public + private) using affiliation parameter
-    const allRepos = await fetchAllPages(`/user/repos?affiliation=owner,collaborator&sort=updated`, 10);
+    // Fetch ALL repos (public + private) using visibility=all
+    console.log("Fetching all repos (public + private)...");
+    const allRepos = await fetchAllPages(`/user/repos?visibility=all&affiliation=owner`, 10);
     
-    // Filter repos for this user
-    const userRepos = allRepos.filter((repo: any) => repo.owner.login === username);
+    console.log(`Total repos fetched: ${allRepos.length}`);
     
-    // Separate public and private repos
-    const publicRepos = userRepos.filter((repo: any) => !repo.private);
-    const privateRepos = userRepos.filter((repo: any) => repo.private);
+    // Separate public and private
+    const publicRepos = allRepos.filter((repo: any) => !repo.private);
+    const privateRepos = allRepos.filter((repo: any) => repo.private);
+    
+    console.log(`Public: ${publicRepos.length}, Private: ${privateRepos.length}`);
 
-    // Parallel fetch for search queries and other data
+    // Parallel fetch for other data
     const [
       prResponse,
       issueResponse,
@@ -86,100 +85,130 @@ export async function getGithubData(username: string, year: number) {
     ] = await Promise.all([
       githubFetch(
         `/search/issues?q=author:${username}+is:pr+created:${queryDateRange}&per_page=1`
-      ),
+      ).catch(() => ({ total_count: 0 })),
       githubFetch(
         `/search/issues?q=author:${username}+is:issue+created:${queryDateRange}&per_page=1`
-      ),
+      ).catch(() => ({ total_count: 0 })),
       fetchAllPages(`/users/${username}/starred`, 3),
       fetchAllPages(`/users/${username}/followers`, 5),
       fetchAllPages(`/users/${username}/following`, 5),
     ]);
 
-    // Get accurate commit count by fetching from each repo
-    // This is faster and more accurate than search API
-    const startDate = new Date(`${year}-01-01T00:00:00Z`);
-    const endDate = new Date(`${year}-12-31T23:59:59Z`);
-    
-    let totalCommits = 0;
+    // Calculate total stars and forks
+    const totalStarsReceived = allRepos.reduce(
+      (sum: number, repo: any) => sum + repo.stargazers_count,
+      0
+    );
+    const totalForksReceived = allRepos.reduce(
+      (sum: number, repo: any) => sum + repo.forks_count,
+      0
+    );
+
+    // Get commit counts per repo using contributors endpoint (like Python example)
+    console.log("Fetching commit counts...");
     const repoCommitData: Array<{ repo: string; commits: number; language: string | null }> = [];
-    
-    const commitPromises = userRepos.slice(0, 50).map(async (repo: any) => {
-      try {
-        const commits = await githubFetch(
-          `/repos/${repo.full_name}/commits?author=${username}&since=${startDate.toISOString()}&until=${endDate.toISOString()}&per_page=1`
-        );
-        const count = Array.isArray(commits) ? commits.length : 0;
-        repoCommitData.push({
-          repo: repo.name,
-          commits: count,
-          language: repo.language,
-        });
-        return count;
-      } catch {
-        return 0;
-      }
-    });
+    let totalCommits = 0;
+    const allCommitDates: Date[] = [];
 
-    const commitCounts = await Promise.all(commitPromises);
-    totalCommits = commitCounts.reduce((sum, count) => sum + count, 0);
-
-    // For repos beyond first 50, use statistics API for efficiency
-    if (userRepos.length > 50) {
-      const remainingRepos = userRepos.slice(50);
-      const statsPromises = remainingRepos.map(async (repo: any) => {
+    // Process repos in batches to avoid overwhelming the API
+    const batchSize = 10;
+    for (let i = 0; i < allRepos.length; i += batchSize) {
+      const batch = allRepos.slice(i, i + batchSize);
+      
+      await Promise.all(batch.map(async (repo: any) => {
         try {
-          const stats = await githubFetch(`/repos/${repo.full_name}/stats/contributors`);
-          if (Array.isArray(stats)) {
-            const userStats = stats.find((s: any) => s.author?.login === username);
-            if (userStats?.weeks) {
-              // Sum commits from weeks in the target year
-              const yearCommits = userStats.weeks
-                .filter((week: any) => {
-                  const weekDate = new Date(week.w * 1000);
-                  return weekDate >= startDate && weekDate <= endDate;
-                })
-                .reduce((sum: number, week: any) => sum + (week.c || 0), 0);
-              repoCommitData.push({
-                repo: repo.name,
-                commits: yearCommits,
-                language: repo.language,
-              });
-              return yearCommits;
+          // Use contributors endpoint for accurate commit count
+          const contributors = await githubFetch(`/repos/${repo.full_name}/contributors`);
+          
+          if (Array.isArray(contributors)) {
+            const userContrib = contributors.find((c: any) => c.login === username);
+            const commitCount = userContrib?.contributions || 0;
+            
+            repoCommitData.push({
+              repo: repo.name,
+              commits: commitCount,
+              language: repo.language,
+            });
+            
+            totalCommits += commitCount;
+
+            // Fetch commit dates for streak calculation (limit to 100 per repo)
+            if (commitCount > 0) {
+              const commits = await githubFetch(
+                `/repos/${repo.full_name}/commits?author=${username}&per_page=100`
+              ).catch(() => []);
+              
+              if (Array.isArray(commits)) {
+                commits.forEach((commit: any) => {
+                  const dateStr = commit.commit?.author?.date;
+                  if (dateStr) {
+                    allCommitDates.push(new Date(dateStr));
+                  }
+                });
+              }
             }
           }
-          return 0;
-        } catch {
-          return 0;
+        } catch (error) {
+          console.log(`Skipping ${repo.name}:`, error);
         }
-      });
-      
-      const additionalCommits = await Promise.all(statsPromises);
-      totalCommits += additionalCommits.reduce((sum, count) => sum + count, 0);
+      }));
     }
+
+    console.log(`Total commits calculated: ${totalCommits}`);
 
     // Find repo with most commits
     const topRepoByCommits = repoCommitData
       .filter(r => r.commits > 0)
       .sort((a, b) => b.commits - a.commits)[0] || null;
 
-    // Fetch language data from repos (increased sample)
-    const repoSample = userRepos.slice(0, 100);
-    const languagePromises = repoSample.map((repo: any) =>
-      githubFetch(`/repos/${repo.full_name}/languages`).catch(() => ({}))
-    );
-    const languagesData = await Promise.all(languagePromises);
+    // Calculate longest commit streak
+    let longestStreak = 0;
+    if (allCommitDates.length > 0) {
+      const sortedDates = allCommitDates
+        .map(d => d.toISOString().split('T')[0]) // Get just the date part
+        .filter((v, i, a) => a.indexOf(v) === i) // Remove duplicates
+        .sort();
 
-    const languageMap: Record<string, number> = {};
-    languagesData.forEach((langData) => {
-      for (const lang in langData) {
-        languageMap[lang] = (languageMap[lang] || 0) + langData[lang];
+      let currentStreak = 1;
+      longestStreak = 1;
+
+      for (let i = 1; i < sortedDates.length; i++) {
+        const prevDate = new Date(sortedDates[i - 1]);
+        const currDate = new Date(sortedDates[i]);
+        const daysDiff = Math.floor((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (daysDiff === 1) {
+          currentStreak++;
+          longestStreak = Math.max(longestStreak, currentStreak);
+        } else {
+          currentStreak = 1;
+        }
       }
-    });
+    }
+
+    // Fetch language data
+    const languageMap: Record<string, number> = {};
+    
+    const langBatchSize = 20;
+    for (let i = 0; i < allRepos.length; i += langBatchSize) {
+      const batch = allRepos.slice(i, i + langBatchSize);
+      
+      await Promise.all(batch.map(async (repo: any) => {
+        try {
+          const langData = await githubFetch(`/repos/${repo.full_name}/languages`);
+          for (const lang in langData) {
+            languageMap[lang] = (languageMap[lang] || 0) + langData[lang];
+          }
+        } catch {
+          // Skip if language fetch fails
+        }
+      }));
+    }
     
     const sortedLanguages = Object.entries(languageMap).sort(([, a], [, b]) => b - a);
 
     // Get top repos by different metrics
-    const topReposByStars = [...userRepos]
+    const topReposByStars = [...allRepos]
       .sort((a, b) => b.stargazers_count - a.stargazers_count)
       .slice(0, 10)
       .map((r: any) => ({
@@ -190,7 +219,7 @@ export async function getGithubData(username: string, year: number) {
         url: r.html_url,
       }));
 
-    const topReposByForks = [...userRepos]
+    const topReposByForks = [...allRepos]
       .sort((a, b) => b.forks_count - a.forks_count)
       .slice(0, 10)
       .map((r: any) => ({
@@ -200,7 +229,7 @@ export async function getGithubData(username: string, year: number) {
       }));
 
     // Recently updated repos in the selected year
-    const recentlyUpdated = userRepos
+    const recentlyUpdated = allRepos
       .filter((repo: any) => {
         const updated = new Date(repo.updated_at);
         return updated.getFullYear() === year;
@@ -214,7 +243,7 @@ export async function getGithubData(username: string, year: number) {
       }));
 
     // Repo graveyard (abandoned repos)
-    const repoGraveyard = userRepos
+    const repoGraveyard = allRepos
       .filter((repo: any) => {
         const lastPushed = new Date(repo.pushed_at);
         return lastPushed.getFullYear() < year && !repo.fork;
@@ -226,34 +255,8 @@ export async function getGithubData(username: string, year: number) {
         language: r.language,
       }));
 
-    // Forked repos count
-    const forkedRepos = userRepos.filter((repo: any) => repo.fork);
-
-    // Calculate total stars received across all repos
-    const totalStarsReceived = userRepos.reduce(
-      (sum: number, repo: any) => sum + repo.stargazers_count,
-      0
-    );
-
-    // Calculate total forks received across all repos
-    const totalForksReceived = userRepos.reduce(
-      (sum: number, repo: any) => sum + repo.forks_count,
-      0
-    );
-
-    // Activity metrics
-    const activityHistory = {
-      totalCommits,
-      totalPRs: prResponse.total_count,
-      totalIssues: issueResponse.total_count,
-      publicRepos: publicRepos.length,
-      privateRepos: privateRepos.length,
-      totalRepos: userRepos.length,
-      forkedRepos: forkedRepos.length,
-      totalStarsReceived,
-      totalForksReceived,
-      totalStarsGiven: starredRepos.length,
-    };
+    // Forked repos
+    const forkedRepos = allRepos.filter((repo: any) => repo.fork);
 
     return {
       user: {
@@ -270,7 +273,7 @@ export async function getGithubData(username: string, year: number) {
         commits: totalCommits,
         pullRequests: prResponse.total_count,
         issues: issueResponse.total_count,
-        repos: userRepos.length,
+        repos: allRepos.length,
         publicRepos: publicRepos.length,
         privateRepos: privateRepos.length,
         forkedRepos: forkedRepos.length,
@@ -279,6 +282,7 @@ export async function getGithubData(username: string, year: number) {
         totalForksReceived,
         followers: followersData.length,
         following: followingData.length,
+        longestStreak,
       },
       languages: sortedLanguages,
       topReposByStars,
@@ -292,7 +296,19 @@ export async function getGithubData(username: string, year: number) {
         language: r.language,
         stars: r.stargazers_count,
       })),
-      activityHistory,
+      activityHistory: {
+        totalCommits,
+        totalPRs: prResponse.total_count,
+        totalIssues: issueResponse.total_count,
+        publicRepos: publicRepos.length,
+        privateRepos: privateRepos.length,
+        totalRepos: allRepos.length,
+        forkedRepos: forkedRepos.length,
+        totalStarsReceived,
+        totalForksReceived,
+        totalStarsGiven: starredRepos.length,
+        longestStreak,
+      },
       socialStats: {
         followers: followersData.length,
         following: followingData.length,
