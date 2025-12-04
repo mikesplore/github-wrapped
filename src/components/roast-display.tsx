@@ -32,12 +32,15 @@ import { Button } from "./ui/button";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Progress } from "./ui/progress";
+import { AudioPlayer } from "./audio-player";
+import { selectMusicForUser, type UserStats } from "@/lib/music-selector";
 
 type RoastDisplayProps = {
   slides: string[];
   username: string;
   year: number;
   avatarUrl: string;
+  stats: UserStats;
 };
 
 const iconMapping: Record<string, React.ReactNode> = {
@@ -74,10 +77,14 @@ export default function RoastDisplay({
   username,
   year,
   avatarUrl,
+  stats,
 }: RoastDisplayProps) {
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
   const [count, setCount] = useState(0);
+
+  // Select music based on user stats
+  const musicTrack = useMemo(() => selectMusicForUser(stats), [stats]);
 
   useEffect(() => {
     if (!api) {
@@ -179,8 +186,8 @@ export default function RoastDisplay({
                     </>
                   )}
 
-                  {/* Content */}
-                  <div className="relative z-10 flex h-full w-full max-w-4xl flex-col items-center justify-center px-6 py-12 text-center sm:px-8 md:px-12">
+                  {/* Content - with padding to avoid button overlap */}
+                  <div className="relative z-10 flex h-full w-full max-w-4xl flex-col items-center justify-center px-20 py-12 text-center sm:px-24 md:px-32 lg:px-40">
                     <div className="animate-in fade-in-0 slide-in-from-bottom-4 duration-700 space-y-6 sm:space-y-8">
                       {/* Icon */}
                       <div className="flex items-center justify-center">
@@ -211,23 +218,23 @@ export default function RoastDisplay({
             <CarouselNext className="absolute right-4 top-1/2 h-12 w-12 -translate-y-1/2 border-2 bg-background/80 backdrop-blur-sm hover:bg-background lg:right-8" />
           </div>
 
-          {/* Navigation buttons - Mobile (touch-friendly) */}
-          <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-2 md:hidden">
+          {/* Navigation buttons - Mobile (touch-friendly, positioned at edges) */}
+          <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between pointer-events-none md:hidden">
             <Button
               variant="ghost"
               size="icon"
-              className="h-16 w-16 touch-manipulation rounded-full bg-background/50 backdrop-blur-sm hover:bg-background/80"
+              className="h-14 w-14 touch-manipulation rounded-full bg-background/30 backdrop-blur-sm hover:bg-background/60 pointer-events-auto ml-2"
               onClick={() => api?.scrollPrev()}
             >
-              <ChevronLeft className="h-8 w-8" />
+              <ChevronLeft className="h-6 w-6" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="h-16 w-16 touch-manipulation rounded-full bg-background/50 backdrop-blur-sm hover:bg-background/80"
+              className="h-14 w-14 touch-manipulation rounded-full bg-background/30 backdrop-blur-sm hover:bg-background/60 pointer-events-auto mr-2"
               onClick={() => api?.scrollNext()}
             >
-              <ChevronRight className="h-8 w-8" />
+              <ChevronRight className="h-6 w-6" />
             </Button>
           </div>
         </Carousel>
@@ -242,6 +249,9 @@ export default function RoastDisplay({
           Swipe or use arrow keys to navigate
         </p>
       </div>
+
+      {/* Audio Player */}
+      <AudioPlayer track={musicTrack} autoPlay={false} />
     </div>
   );
 }

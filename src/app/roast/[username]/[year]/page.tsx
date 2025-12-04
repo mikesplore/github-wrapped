@@ -59,6 +59,13 @@ export default async function RoastPage({ params }: RoastPageProps) {
         username={username}
         year={year}
         avatarUrl={githubData.user.avatar_url}
+        stats={{
+          commits: githubData.stats.commits,
+          repos: githubData.stats.repos,
+          pullRequests: githubData.stats.pullRequests,
+          issues: githubData.stats.issues,
+          dominantLanguage: githubData.languages[0]?.[0],
+        }}
       />
     </main>
   );
