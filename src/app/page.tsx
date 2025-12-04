@@ -17,9 +17,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Flame, Github, Sparkles, TrendingUp } from "lucide-react";
+import { Flame, Github, Sparkles, TrendingUp, Lock, Globe } from "lucide-react";
+import { auth, signIn } from "@/auth";
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth();
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
@@ -66,7 +68,7 @@ export default function Home() {
               <Github className="mt-1 h-5 w-5 flex-shrink-0 text-accent sm:h-6 sm:w-6" />
               <div className="text-left">
                 <h3 className="text-sm font-bold sm:text-base">Public & Private Repos</h3>
-                <p className="text-xs text-muted-foreground sm:text-sm">Complete stats, nothing hidden</p>
+                <p className="text-xs text-muted-foreground sm:text-sm">Login with GitHub for complete stats</p>
               </div>
             </div>
             <div className="flex items-start gap-3 rounded-lg bg-card/50 p-3 backdrop-blur-sm sm:p-4">
@@ -85,17 +87,95 @@ export default function Home() {
             <CardHeader className="space-y-1 pb-4">
               <CardTitle className="text-2xl sm:text-3xl">Ready to Get Roasted?</CardTitle>
               <CardDescription className="text-sm sm:text-base">
-                Enter your GitHub username and brace yourself.
+                {session?.user ? (
+                  <>Logged in as <span className="font-semibold">{session.user.name}</span></>
+                ) : (
+                  "Login for private repos or enter any username for public stats"
+                )}
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {/* Login/Logout Section */}
+              <div className="mb-6 space-y-3">
+                {session?.user ? (
+                  <div className="rounded-lg border bg-accent/5 p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {session.user.image && (
+                          <img 
+                            src={session.user.image} 
+                            alt={session.user.name || ''} 
+                            className="h-10 w-10 rounded-full"
+                          />
+                        )}
+                        <div>
+                          <p className="text-sm font-semibold">{session.user.name}</p>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Lock className="h-3 w-3" />
+                            Private repos accessible
+                          </p>
+                        </div>
+                      </div>
+                      <form action={async () => {
+                        'use server'
+                        const { signOut } = await import("@/auth");
+                        await signOut();
+                      }}>
+                        <Button variant="outline" size="sm" type="submit">
+                          Logout
+                        </Button>
+                      </form>
+                    </div>
+                  </div>
+                ) : (
+                  <form action={async () => {
+                    'use server'
+                    await signIn("github");
+                  }}>
+                    <Button 
+                      variant="outline" 
+                      className="w-full h-11 sm:h-12" 
+                      type="submit"
+                    >
+                      <Github className="mr-2 h-5 w-5" />
+                      Login with GitHub
+                      <Lock className="ml-2 h-4 w-4 text-muted-foreground" />
+                    </Button>
+                    <p className="mt-2 text-center text-xs text-muted-foreground">
+                      Get accurate stats with private repos included
+                    </p>
+                  </form>
+                )}
+              </div>
+
+              {/* Divider */}
+              <div className="relative mb-6">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">
+                    {session?.user ? "Your stats or search anyone" : "Or check public stats"}
+                  </span>
+                </div>
+              </div>
+
               <form action={generateReport} className="flex flex-col gap-4 sm:gap-5">
                 <div className="space-y-2">
-                  <Label htmlFor="username" className="text-sm font-medium sm:text-base">GitHub Username</Label>
+                  <Label htmlFor="username" className="text-sm font-medium sm:text-base flex items-center gap-2">
+                    GitHub Username
+                    {!session?.user && (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground font-normal">
+                        <Globe className="h-3 w-3" />
+                        Public only
+                      </span>
+                    )}
+                  </Label>
                   <Input
                     id="username"
                     name="username"
-                    placeholder="e.g., torvalds"
+                    placeholder={session?.user?.name || "e.g., torvalds"}
+                    defaultValue={session?.user?.name || ""}
                     required
                     className="h-11 text-base sm:h-12 sm:text-lg"
                   />

@@ -2,6 +2,7 @@ import { generateWrappedSlides } from "@/ai/flows/generate-wrapped-slides";
 import RoastDisplay from "@/components/roast-display";
 import { getGithubData } from "@/lib/github";
 import { notFound } from "next/navigation";
+import { auth } from "@/auth";
 
 export const revalidate = 3600; // Revalidate every hour
 
@@ -27,9 +28,14 @@ export default async function RoastPage({ params }: RoastPageProps) {
     notFound();
   }
 
+  // Get OAuth session if user is logged in
+  const session = await auth();
+  // @ts-ignore
+  const userToken = session?.accessToken as string | undefined;
+
   let githubData;
   try {
-    githubData = await getGithubData(username, year);
+    githubData = await getGithubData(username, year, userToken);
   } catch (error) {
     if (error instanceof Error) {
         // This will be caught by the nearest error.js file

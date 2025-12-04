@@ -4,11 +4,14 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
 async function githubFetch(
   endpoint: string,
+  token?: string,
   options: RequestInit = {}
 ): Promise<any> {
-  if (!GITHUB_TOKEN) {
+  const authToken = token || GITHUB_TOKEN;
+  
+  if (!authToken) {
     throw new Error(
-      "GITHUB_TOKEN is not set. Please add it to your environment variables."
+      "No GitHub token available. Please login or set GITHUB_TOKEN."
     );
   }
 
@@ -16,7 +19,7 @@ async function githubFetch(
     ...options,
     headers: {
       ...options.headers,
-      Authorization: `token ${GITHUB_TOKEN}`,
+      Authorization: `token ${authToken}`,
       Accept: "application/vnd.github+json",
     },
     cache: 'no-store', // Disable caching for fresh data
@@ -27,7 +30,7 @@ async function githubFetch(
     console.error("GitHub API Error:", errorBody.message);
     let message = `GitHub API request failed for ${endpoint}: ${errorBody.message}`;
     if (res.status === 401) {
-      message = "GitHub token is invalid or has expired. Please provide a valid one.";
+      message = "GitHub token is invalid or has expired. Please login again.";
     } else if (res.status === 403) {
         message = "GitHub API rate limit exceeded. Please wait a while before trying again."
     }
@@ -38,13 +41,13 @@ async function githubFetch(
 }
 
 // Helper to fetch all pages
-async function fetchAllPages(endpoint: string, maxPages: number = 10): Promise<any[]> {
+async function fetchAllPages(endpoint: string, token?: string, maxPages: number = 10): Promise<any[]> {
   const results: any[] = [];
   let page = 1;
   
   while (page <= maxPages) {
     const separator = endpoint.includes('?') ? '&' : '?';
-    const data = await githubFetch(`${endpoint}${separator}per_page=100&page=${page}`);
+    const data = await githubFetch(`${endpoint}${separator}per_page=100&page=${page}`, token);
     
     if (!Array.isArray(data) || data.length === 0) break;
     results.push(...data);
@@ -56,16 +59,24 @@ async function fetchAllPages(endpoint: string, maxPages: number = 10): Promise<a
   return results;
 }
 
-export async function getGithubData(username: string, year: number) {
+export async function getGithubData(username: string, year: number, userToken?: string) {
   const queryDateRange = `${year}-01-01..${year}-12-31`;
 
   try {
+    // Fetch authenticated user info first
+    const authenticatedUser = await githubFetch(`/user`, userToken);
+    
+    // Check if requesting authenticated user's data or another user
+    const isAuthenticatedUser = authenticatedUser.login.toLowerCase() === username.toLowerCase();
+    
     // Fetch user info
-    const user = await githubFetch(`/users/${username}`);
+    const user = isAuthenticatedUser ? authenticatedUser : await githubFetch(`/users/${username}`, userToken);
 
-    // Fetch ALL repos (public + private) using visibility=all
+    // Fetch ALL repos (public + private) using visibility=all for authenticated user
     console.log("Fetching all repos (public + private)...");
-    const allRepos = await fetchAllPages(`/user/repos?visibility=all&affiliation=owner`, 10);
+    const allRepos = isAuthenticatedUser 
+      ? await fetchAllPages(`/user/repos?visibility=all&affiliation=owner`, userToken, 10)
+      : await fetchAllPages(`/users/${username}/repos?type=all`, userToken, 10);
     
     console.log(`Total repos fetched: ${allRepos.length}`);
     
@@ -84,14 +95,16 @@ export async function getGithubData(username: string, year: number) {
       followingData,
     ] = await Promise.all([
       githubFetch(
-        `/search/issues?q=author:${username}+is:pr+created:${queryDateRange}&per_page=1`
+        `/search/issues?q=author:${username}+is:pr+created:${queryDateRange}&per_page=1`,
+        userToken
       ).catch(() => ({ total_count: 0 })),
       githubFetch(
-        `/search/issues?q=author:${username}+is:issue+created:${queryDateRange}&per_page=1`
+        `/search/issues?q=author:${username}+is:issue+created:${queryDateRange}&per_page=1`,
+        userToken
       ).catch(() => ({ total_count: 0 })),
-      fetchAllPages(`/users/${username}/starred`, 3),
-      fetchAllPages(`/users/${username}/followers`, 5),
-      fetchAllPages(`/users/${username}/following`, 5),
+      fetchAllPages(`/users/${username}/starred`, userToken, 3),
+      fetchAllPages(`/users/${username}/followers`, userToken, 5),
+      fetchAllPages(`/users/${username}/following`, userToken, 5),
     ]);
 
     // Calculate total stars and forks
@@ -118,7 +131,7 @@ export async function getGithubData(username: string, year: number) {
       await Promise.all(batch.map(async (repo: any) => {
         try {
           // Use contributors endpoint for accurate commit count
-          const contributors = await githubFetch(`/repos/${repo.full_name}/contributors`);
+          const contributors = await githubFetch(`/repos/${repo.full_name}/contributors`, userToken);
           
           if (Array.isArray(contributors)) {
             const userContrib = contributors.find((c: any) => c.login === username);
@@ -135,7 +148,8 @@ export async function getGithubData(username: string, year: number) {
             // Fetch commit dates for streak calculation (limit to 100 per repo)
             if (commitCount > 0) {
               const commits = await githubFetch(
-                `/repos/${repo.full_name}/commits?author=${username}&per_page=100`
+                `/repos/${repo.full_name}/commits?author=${username}&per_page=100`,
+                userToken
               ).catch(() => []);
               
               if (Array.isArray(commits)) {
@@ -195,7 +209,7 @@ export async function getGithubData(username: string, year: number) {
       
       await Promise.all(batch.map(async (repo: any) => {
         try {
-          const langData = await githubFetch(`/repos/${repo.full_name}/languages`);
+          const langData = await githubFetch(`/repos/${repo.full_name}/languages`, userToken);
           for (const lang in langData) {
             languageMap[lang] = (languageMap[lang] || 0) + langData[lang];
           }

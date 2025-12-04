@@ -95,7 +95,9 @@ export default function RoastDisplay({
 
   const slideData = useMemo(() => {
     return slides.map((slide, index) => {
-      const [title, ...descriptionParts] = slide.split("\n\n");
+      const [rawTitle, ...descriptionParts] = slide.split("\n\n");
+      // Remove markdown formatting from title (**, *, etc.)
+      const title = rawTitle.replace(/\*\*|\*/g, '').trim();
       const description = descriptionParts.join("\n\n");
       const { icon, image } = getSlideAttributes(slide, index);
       return { title, description, icon, image };
