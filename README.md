@@ -56,20 +56,15 @@ npm install
 Create a `.env` file in the root directory:
 
 ```env
-# GitHub Personal Access Token (required)
-# Generate at: https://github.com/settings/tokens
-# Scopes needed: repo, read:user
-GITHUB_TOKEN=your_github_personal_access_token
 
-# Google Genkit API Key (required for AI features)
-# Get from: https://console.cloud.google.com/
-GOOGLE_GENAI_API_KEY=your_google_api_key
+GITHUB_TOKEN=your_github_personal_access_token
+GEMINI_API_KEY=your_gemini_api_key
 ```
 
 **Getting your tokens:**
 
 - **GitHub Token:** Visit [github.com/settings/tokens](https://github.com/settings/tokens) → Generate new token (classic) → Select scopes: `repo`, `read:user`
-- **Google API Key:** Visit [Google AI Studio](https://makersuite.google.com/app/apikey) → Create API key
+- **Google API Key:** Visit [Google AI Studio](https://aistudio.google.com/api-keys) → Create API key
 
 ### 4. Run Development Server
 
