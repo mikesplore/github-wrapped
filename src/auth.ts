@@ -14,15 +14,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     })
   ],
   callbacks: {
-    async jwt({ token, account }) {
+    async jwt({ token, account, profile }) {
       if (account) {
         token.accessToken = account.access_token
+      }
+      if (profile) {
+        // @ts-ignore - GitHub profile has login property
+        token.username = profile.login
       }
       return token
     },
     async session({ session, token }) {
       // @ts-ignore
       session.accessToken = token.accessToken
+      // @ts-ignore
+      session.username = token.username
       return session
     }
   },

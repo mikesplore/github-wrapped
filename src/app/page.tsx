@@ -1,15 +1,7 @@
 import { generateReport } from "@/app/actions";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -17,200 +9,173 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Flame, Github, Sparkles, TrendingUp, Lock, Globe } from "lucide-react";
+import { Flame, Github, LogOut } from "lucide-react";
 import { auth, signIn } from "@/auth";
 
 export default async function Home() {
   const session = await auth();
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
+  
+  // @ts-ignore
+  const githubUsername = session?.username as string | undefined;
 
   return (
-    <main className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden p-4">
-      {/* Spotify-inspired gradient background */}
-      <div className="fixed inset-0 -z-10 bg-gradient-to-br from-accent/20 via-background to-primary/5" />
-      <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-accent/10 via-transparent to-transparent" />
+    <main className="relative flex min-h-screen w-full items-center justify-center overflow-hidden p-4">
+      {/* Animated gradient background */}
+      <div className="fixed inset-0 -z-10 bg-gradient-to-br from-green-500/10 via-background to-blue-500/10" />
+      <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-green-400/5 via-transparent to-transparent" />
       
-      {/* Animated gradient orbs */}
-      <div className="fixed left-0 top-0 -z-10 h-96 w-96 animate-pulse rounded-full bg-accent/10 blur-3xl" />
-      <div className="fixed bottom-0 right-0 -z-10 h-96 w-96 animate-pulse rounded-full bg-primary/10 blur-3xl delay-700" />
+      {/* Floating gradient orbs */}
+      <div className="fixed -left-40 top-0 -z-10 h-80 w-80 animate-pulse rounded-full bg-green-500/20 blur-3xl" />
+      <div className="fixed -right-40 bottom-0 -z-10 h-80 w-80 animate-pulse rounded-full bg-blue-500/20 blur-3xl delay-1000" />
 
-      <div className="flex w-full max-w-6xl flex-col items-center justify-center gap-8 lg:flex-row lg:items-start lg:gap-12">
-        {/* Left side - Hero content */}
-        <div className="flex flex-1 flex-col items-center text-center lg:items-start lg:text-left lg:pt-12">
-          <div className="mb-6 flex items-center gap-3">
-            <Logo className="h-16 w-16 sm:h-20 sm:w-20 lg:h-24 lg:w-24" />
-            <div className="flex flex-col">
-              <h1 className="font-headline text-4xl font-black tracking-tighter sm:text-5xl lg:text-6xl xl:text-7xl">
-                Git Roast
-              </h1>
-              <span className="bg-gradient-to-r from-accent to-accent/60 bg-clip-text font-headline text-4xl font-black tracking-tighter text-transparent sm:text-5xl lg:text-6xl xl:text-7xl">
-                Wrapped
-              </span>
-            </div>
+      {/* Main content - centered */}
+      <div className="w-full max-w-md space-y-8">
+        {/* Logo & Title */}
+        <div className="text-center space-y-4">
+          <div className="flex justify-center">
+            <Logo className="h-20 w-20 sm:h-24 sm:w-24" />
           </div>
-          
-          <p className="mb-6 max-w-lg text-base text-muted-foreground sm:text-lg lg:text-xl">
-            Your code doesn't lie, and neither do we. Get ready for the most savage, 
-            AI-powered roast of your coding year. Spotify Wrapped vibes, GitHub reality check.
+          <div>
+            <h1 className="font-headline text-5xl sm:text-6xl font-black tracking-tighter">
+              Git Roast
+            </h1>
+            <h2 className="font-headline text-5xl sm:text-6xl font-black tracking-tighter bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+              Wrapped
+            </h2>
+          </div>
+          <p className="text-muted-foreground text-lg max-w-sm mx-auto">
+            Your year in code, roasted by AI. No mercy, just facts.
           </p>
-
-          {/* Feature highlights */}
-          <div className="mb-8 grid w-full max-w-md gap-3 sm:gap-4">
-            <div className="flex items-start gap-3 rounded-lg bg-card/50 p-3 backdrop-blur-sm sm:p-4">
-              <Sparkles className="mt-1 h-5 w-5 flex-shrink-0 text-accent sm:h-6 sm:w-6" />
-              <div className="text-left">
-                <h3 className="text-sm font-bold sm:text-base">Savage AI Roasts</h3>
-                <p className="text-xs text-muted-foreground sm:text-sm">No mercy, just facts wrapped in comedy</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 rounded-lg bg-card/50 p-3 backdrop-blur-sm sm:p-4">
-              <Github className="mt-1 h-5 w-5 flex-shrink-0 text-accent sm:h-6 sm:w-6" />
-              <div className="text-left">
-                <h3 className="text-sm font-bold sm:text-base">Public & Private Repos</h3>
-                <p className="text-xs text-muted-foreground sm:text-sm">Login with GitHub for complete stats</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 rounded-lg bg-card/50 p-3 backdrop-blur-sm sm:p-4">
-              <TrendingUp className="mt-1 h-5 w-5 flex-shrink-0 text-accent sm:h-6 sm:w-6" />
-              <div className="text-left">
-                <h3 className="text-sm font-bold sm:text-base">Spotify-Style Slides</h3>
-                <p className="text-xs text-muted-foreground sm:text-sm">Swipe through your year in code</p>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Right side - Form card */}
-        <div className="w-full max-w-md lg:max-w-lg">
-          <Card className="border-2 shadow-2xl backdrop-blur-sm bg-card/95">
-            <CardHeader className="space-y-1 pb-4">
-              <CardTitle className="text-2xl sm:text-3xl">Ready to Get Roasted?</CardTitle>
-              <CardDescription className="text-sm sm:text-base">
-                {session?.user ? (
-                  <>Logged in as <span className="font-semibold">{session.user.name}</span></>
-                ) : (
-                  "Login for private repos or enter any username for public stats"
-                )}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {/* Login/Logout Section */}
-              <div className="mb-6 space-y-3">
-                {session?.user ? (
-                  <div className="rounded-lg border bg-accent/5 p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        {session.user.image && (
-                          <img 
-                            src={session.user.image} 
-                            alt={session.user.name || ''} 
-                            className="h-10 w-10 rounded-full"
-                          />
-                        )}
-                        <div>
-                          <p className="text-sm font-semibold">{session.user.name}</p>
-                          <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Lock className="h-3 w-3" />
-                            Private repos accessible
-                          </p>
-                        </div>
-                      </div>
-                      <form action={async () => {
-                        'use server'
-                        const { signOut } = await import("@/auth");
-                        await signOut();
-                      }}>
-                        <Button variant="outline" size="sm" type="submit">
-                          Logout
-                        </Button>
-                      </form>
-                    </div>
-                  </div>
-                ) : (
-                  <form action={async () => {
-                    'use server'
-                    await signIn("github");
-                  }}>
-                    <Button 
-                      variant="outline" 
-                      className="w-full h-11 sm:h-12" 
-                      type="submit"
-                    >
-                      <Github className="mr-2 h-5 w-5" />
-                      Login with GitHub
-                      <Lock className="ml-2 h-4 w-4 text-muted-foreground" />
-                    </Button>
-                    <p className="mt-2 text-center text-xs text-muted-foreground">
-                      Get accurate stats with private repos included
-                    </p>
-                  </form>
-                )}
+        {/* Auth Section */}
+        {session?.user ? (
+          <div className="rounded-2xl border bg-card/50 backdrop-blur-sm p-6 space-y-4">
+            <div className="flex items-center gap-4">
+              {session.user.image && (
+                <img 
+                  src={session.user.image} 
+                  alt={session.user.name || ''} 
+                  className="h-12 w-12 rounded-full ring-2 ring-green-500/20"
+                />
+              )}
+              <div className="flex-1">
+                <p className="font-semibold">{session.user.name}</p>
+                <p className="text-sm text-muted-foreground">@{githubUsername}</p>
               </div>
-
-              {/* Divider */}
-              <div className="relative mb-6">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">
-                    {session?.user ? "Your stats or search anyone" : "Or check public stats"}
-                  </span>
-                </div>
-              </div>
-
-              <form action={generateReport} className="flex flex-col gap-4 sm:gap-5">
-                <div className="space-y-2">
-                  <Label htmlFor="username" className="text-sm font-medium sm:text-base flex items-center gap-2">
-                    GitHub Username
-                    {!session?.user && (
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground font-normal">
-                        <Globe className="h-3 w-3" />
-                        Public only
-                      </span>
-                    )}
-                  </Label>
-                  <Input
-                    id="username"
-                    name="username"
-                    placeholder={session?.user?.name || "e.g., torvalds"}
-                    defaultValue={session?.user?.name || ""}
-                    required
-                    className="h-11 text-base sm:h-12 sm:text-lg"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="year" className="text-sm font-medium sm:text-base">Year</Label>
-                  <Select name="year" defaultValue={String(currentYear)}>
-                    <SelectTrigger id="year" className="h-11 w-full sm:h-12">
-                      <SelectValue placeholder="Select a year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {years.map((year) => (
-                        <SelectItem key={year} value={String(year)}>
-                          {year}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button 
-                  type="submit" 
-                  size="lg" 
-                  className="mt-2 h-12 text-base font-bold sm:h-14 sm:text-lg hover:scale-[1.02] transition-transform"
-                >
-                  <Flame className="mr-2 h-5 w-5 sm:h-6 sm:w-6" />
-                  Roast Me!
+              <form action={async () => {
+                'use server'
+                const { signOut } = await import("@/auth");
+                await signOut();
+              }}>
+                <Button variant="ghost" size="icon" type="submit">
+                  <LogOut className="h-4 w-4" />
                 </Button>
               </form>
-            </CardContent>
-          </Card>
-          
-          <p className="mt-6 text-center text-xs text-muted-foreground sm:text-sm">
-            Developed by <span className="font-semibold">Mike</span> • Powered by <span className="font-semibold">Gemini</span> & <span className="font-semibold">GitHub</span>
-          </p>
-        </div>
+            </div>
+            
+            {/* Form for logged-in users */}
+            <form action={generateReport} className="space-y-4">
+              <Input
+                name="username"
+                type="hidden"
+                value={githubUsername || ""}
+              />
+              <Select name="year" defaultValue={String(currentYear)}>
+                <SelectTrigger className="h-12 bg-background/50">
+                  <SelectValue placeholder="Select year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {years.map((year) => (
+                    <SelectItem key={year} value={String(year)}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button 
+                type="submit" 
+                size="lg" 
+                className="w-full h-12 text-lg font-bold bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-500 hover:to-blue-500"
+              >
+                <Flame className="mr-2 h-5 w-5" />
+                Roast My Year
+              </Button>
+            </form>
+            
+            <p className="text-xs text-center text-muted-foreground">
+              Including private repositories
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Guest form */}
+            <form action={generateReport} className="rounded-2xl border bg-card/50 backdrop-blur-sm p-6 space-y-4">
+              <Input
+                name="username"
+                placeholder="GitHub username"
+                required
+                className="h-12 bg-background/50 text-base"
+              />
+              <Select name="year" defaultValue={String(currentYear)}>
+                <SelectTrigger className="h-12 bg-background/50">
+                  <SelectValue placeholder="Select year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {years.map((year) => (
+                    <SelectItem key={year} value={String(year)}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button 
+                type="submit" 
+                size="lg" 
+                className="w-full h-12 text-lg font-bold bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-500 hover:to-blue-500"
+              >
+                <Flame className="mr-2 h-5 w-5" />
+                Roast Me
+              </Button>
+              <p className="text-xs text-center text-muted-foreground">
+                Public repositories only
+              </p>
+            </form>
+
+            {/* Login option */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  or
+                </span>
+              </div>
+            </div>
+
+            <form action={async () => {
+              'use server'
+              await signIn("github");
+            }}>
+              <Button 
+                variant="outline" 
+                className="w-full h-12" 
+                type="submit"
+              >
+                <Github className="mr-2 h-5 w-5" />
+                Login for Private Repos
+              </Button>
+            </form>
+          </div>
+        )}
+
+        {/* Footer */}
+        <p className="text-center text-xs text-muted-foreground">
+          Powered by <span className="font-semibold">Gemini AI</span> • Built by <span className="font-semibold">Mike</span>
+        </p>
       </div>
     </main>
   );
