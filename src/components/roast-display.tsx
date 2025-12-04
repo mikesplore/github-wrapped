@@ -217,6 +217,9 @@ export default function RoastDisplay({
         <p className="mt-1 text-xs text-muted-foreground/70">
           Swipe to navigate
         </p>
+        <p className="mt-2 text-xs text-muted-foreground/60">
+          Developed by <span className="font-medium">Mike</span> • Powered by <span className="font-medium">Gemini</span> & <span className="font-medium">GitHub</span>
+        </p>
       </div>
 
       {/* Audio Player */}

@@ -128,7 +128,7 @@ export default function Home() {
           </Card>
           
           <p className="mt-6 text-center text-xs text-muted-foreground sm:text-sm">
-            Built with Next.js, Genkit, and absolutely zero chill.
+            Developed by <span className="font-semibold">Mike</span> • Powered by <span className="font-semibold">Gemini</span> & <span className="font-semibold">GitHub</span>
           </p>
         </div>
       </div>
