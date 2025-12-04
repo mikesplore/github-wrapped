@@ -1,3 +1,4 @@
+
 const GITHUB_API_URL = "https://api.github.com";
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
@@ -15,7 +16,7 @@ async function githubFetch(
     ...options,
     headers: {
       ...options.headers,
-      Authorization: `Bearer ${GITHUB_TOKEN}`,
+      Authorization: `token ${GITHUB_TOKEN}`,
       "X-GitHub-Api-Version": "2022-11-28",
       Accept: "application/vnd.github+json",
     },
@@ -26,8 +27,14 @@ async function githubFetch(
   if (!res.ok) {
     const errorBody = await res.json();
     console.error("GitHub API Error:", errorBody.message);
+    let message = `GitHub API request failed for ${endpoint}: ${errorBody.message}`;
+    if (res.status === 401) {
+      message = "GitHub token is invalid or has expired. Please provide a valid one.";
+    } else if (res.status === 403) {
+        message = "GitHub API rate limit exceeded. Please wait a while before trying again."
+    }
     throw new Error(
-      `GitHub API request failed for ${endpoint}: ${errorBody.message}`
+      message
     );
   }
 
@@ -51,7 +58,7 @@ export async function getGithubData(username: string, year: number) {
       githubFetch(
         `/search/commits?q=author:${username}+author-date:${queryDateRange}&per_page=1`
       ),
-      githubFetch(`/users/${username}/repos?per_page=100&sort=pushed`),
+      githubFetch(`/users/${username}/repos?per_page=100&sort=pushed&type=all`),
       githubFetch(
         `/search/issues?q=author:${username}+is:pr+created:${queryDateRange}&per_page=1`
       ),
@@ -62,7 +69,7 @@ export async function getGithubData(username: string, year: number) {
     ]);
 
     const languagePromises = repoResponse
-      .slice(0, 10) // Limit to 10 repos to avoid rate limits
+      .slice(0, 20) // Limit to 20 repos to avoid rate limits
       .map((repo: any) =>
         githubFetch(repo.languages_url.replace(GITHUB_API_URL, ""))
       );
