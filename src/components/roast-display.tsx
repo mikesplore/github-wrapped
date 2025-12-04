@@ -226,6 +226,9 @@ export default function RoastDisplay({
         <p className="mt-2 text-xs text-muted-foreground/60">
           Developed by <span className="font-medium">Mike</span> • Powered by <span className="font-medium">Gemini</span> & <span className="font-medium">GitHub</span>
         </p>
+        <p className="mt-1 text-xs text-muted-foreground/50">
+          Music: <span className="font-medium">{musicTrack.name}</span> • Bensound.com
+        </p>
       </div>
 
       {/* Audio Player */}

@@ -17,66 +17,91 @@ export interface MusicTrack {
   vibe: string;
 }
 
-// Curated list of royalty-free/creative commons music tracks
-// You can replace these URLs with actual music file URLs
+// Curated list of royalty-free music tracks from Bensound
+// These are real, high-quality tracks that are free to use with attribution
 const musicLibrary: MusicTrack[] = [
   // High energy tracks for productive developers
   {
-    name: "Code Rush",
-    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+    name: "Epic",
+    url: "https://www.bensound.com/bensound-music/bensound-epic.mp3",
     vibe: "high-energy"
   },
   {
-    name: "Debug Mode",
-    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+    name: "Groovy Hip Hop",
+    url: "https://www.bensound.com/bensound-music/bensound-groovyhiphop.mp3",
+    vibe: "high-energy"
+  },
+  {
+    name: "Energy",
+    url: "https://www.bensound.com/bensound-music/bensound-energy.mp3",
     vibe: "high-energy"
   },
   
   // Chill tracks for moderate activity
   {
-    name: "Lazy Commits",
-    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+    name: "Sunny",
+    url: "https://www.bensound.com/bensound-music/bensound-sunny.mp3",
     vibe: "chill"
   },
   {
-    name: "Weekend Warrior",
-    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+    name: "Creative Minds",
+    url: "https://www.bensound.com/bensound-music/bensound-creativeminds.mp3",
+    vibe: "chill"
+  },
+  {
+    name: "The Lounge",
+    url: "https://www.bensound.com/bensound-music/bensound-thelounge.mp3",
     vibe: "chill"
   },
   
   // Dramatic tracks for prolific coders
   {
-    name: "Merge Conflict Symphony",
-    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
+    name: "Memories",
+    url: "https://www.bensound.com/bensound-music/bensound-memories.mp3",
     vibe: "dramatic"
   },
   {
-    name: "Production Deploy",
-    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
+    name: "Sci-Fi",
+    url: "https://www.bensound.com/bensound-music/bensound-scifi.mp3",
+    vibe: "dramatic"
+  },
+  {
+    name: "Extreme Action",
+    url: "https://www.bensound.com/bensound-music/bensound-extremeaction.mp3",
     vibe: "dramatic"
   },
   
   // Comedic/quirky tracks
   {
-    name: "Tutorial Hell",
-    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3",
+    name: "Funny Song",
+    url: "https://www.bensound.com/bensound-music/bensound-funnysong.mp3",
     vibe: "quirky"
   },
   {
-    name: "Stack Overflow Shuffle",
-    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
+    name: "Little Idea",
+    url: "https://www.bensound.com/bensound-music/bensound-littleidea.mp3",
+    vibe: "quirky"
+  },
+  {
+    name: "Ukulele",
+    url: "https://www.bensound.com/bensound-music/bensound-ukulele.mp3",
     vibe: "quirky"
   },
   
   // Ambient for beginners
   {
-    name: "Hello World",
-    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3",
+    name: "Deep Blue",
+    url: "https://www.bensound.com/bensound-music/bensound-deepblue.mp3",
     vibe: "ambient"
   },
   {
-    name: "Learning Curve",
-    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3",
+    name: "A New Beginning",
+    url: "https://www.bensound.com/bensound-music/bensound-anewbeginning.mp3",
+    vibe: "ambient"
+  },
+  {
+    name: "Acoustic Breeze",
+    url: "https://www.bensound.com/bensound-music/bensound-acousticbreeze.mp3",
     vibe: "ambient"
   }
 ];
