@@ -62,7 +62,7 @@ export function RoastGenerator({ username, year }: RoastGeneratorProps) {
           const personality = await GeminiClient.determineDevPersonality(analysis, userGeminiKey);
 
           setProgress("Generating comedic commentary...");
-          const commentary = await GeminiClient.generateComedic Commentary(analysis, userGeminiKey);
+          const commentary = await GeminiClient.generateComedicCommentary(analysis, userGeminiKey);
 
           setProgress("Comparing year stats...");
           const comparison = await GeminiClient.compareYearStats({
