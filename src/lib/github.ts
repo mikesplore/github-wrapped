@@ -117,12 +117,35 @@ async function githubGraphQL(query: string, variables: any, token?: string): Pro
 // Helper to parse date string safely without timezone issues
 function parseDateString(dateStr: string): number {
   // Parse YYYY-MM-DD format without timezone conversion
-  const [year, month, day] = dateStr.split('-').map(Number);
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) {
+    return 0; // Return 0 for invalid format
+  }
+  const [year, month, day] = parts.map(Number);
+  if (isNaN(year) || isNaN(month) || isNaN(day)) {
+    return 0; // Return 0 for invalid numbers
+  }
   // Return a numeric representation for comparison (YYYYMMDD)
   return year * 10000 + month * 100 + day;
 }
 
-// Helper to check if two dates are consecutive days
+// Days in each month (non-leap year)
+const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+// Check if a year is a leap year
+function isLeapYear(year: number): boolean {
+  return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+}
+
+// Get days in a specific month
+function getDaysInMonth(year: number, month: number): number {
+  if (month === 2 && isLeapYear(year)) {
+    return 29;
+  }
+  return DAYS_IN_MONTH[month - 1];
+}
+
+// Helper to check if two dates are consecutive days using pure arithmetic
 function areConsecutiveDays(date1: number, date2: number): boolean {
   // date1 and date2 are in YYYYMMDD format
   const y1 = Math.floor(date1 / 10000);
@@ -133,15 +156,23 @@ function areConsecutiveDays(date1: number, date2: number): boolean {
   const m2 = Math.floor((date2 % 10000) / 100);
   const d2 = date2 % 100;
   
-  // Create proper Date objects at noon to avoid DST issues
-  const dateObj1 = new Date(y1, m1 - 1, d1, 12, 0, 0);
-  const dateObj2 = new Date(y2, m2 - 1, d2, 12, 0, 0);
+  // Check if date2 is exactly one day after date1
+  // Case 1: Same month - day increases by 1
+  if (y1 === y2 && m1 === m2 && d2 === d1 + 1) {
+    return true;
+  }
   
-  // Calculate difference in days
-  const diffTime = dateObj2.getTime() - dateObj1.getTime();
-  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+  // Case 2: Next month - last day of month to first day of next month
+  if (y1 === y2 && m2 === m1 + 1 && d2 === 1 && d1 === getDaysInMonth(y1, m1)) {
+    return true;
+  }
   
-  return diffDays === 1;
+  // Case 3: Next year - Dec 31 to Jan 1
+  if (y2 === y1 + 1 && m1 === 12 && m2 === 1 && d1 === 31 && d2 === 1) {
+    return true;
+  }
+  
+  return false;
 }
 
 // Calculate longest commit streak using GraphQL contribution calendar
@@ -185,10 +216,13 @@ async function calculateCommitStreak(username: string, year: number, token?: str
 
     if (dates.length === 0) return 0;
 
-    // Convert to numeric format and sort
+    // Convert to numeric format, filter out invalid dates, and sort
     const sortedDates = dates
       .map(d => parseDateString(d))
+      .filter(d => d > 0) // Filter out invalid dates (returns 0)
       .sort((a, b) => a - b);
+
+    if (sortedDates.length === 0) return 0;
 
     // Calculate longest streak
     let longest = 1;
