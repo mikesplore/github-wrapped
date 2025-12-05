@@ -114,6 +114,36 @@ async function githubGraphQL(query: string, variables: any, token?: string): Pro
   return data.data;
 }
 
+// Helper to parse date string safely without timezone issues
+function parseDateString(dateStr: string): number {
+  // Parse YYYY-MM-DD format without timezone conversion
+  const [year, month, day] = dateStr.split('-').map(Number);
+  // Return a numeric representation for comparison (YYYYMMDD)
+  return year * 10000 + month * 100 + day;
+}
+
+// Helper to check if two dates are consecutive days
+function areConsecutiveDays(date1: number, date2: number): boolean {
+  // date1 and date2 are in YYYYMMDD format
+  const y1 = Math.floor(date1 / 10000);
+  const m1 = Math.floor((date1 % 10000) / 100);
+  const d1 = date1 % 100;
+  
+  const y2 = Math.floor(date2 / 10000);
+  const m2 = Math.floor((date2 % 10000) / 100);
+  const d2 = date2 % 100;
+  
+  // Create proper Date objects at noon to avoid DST issues
+  const dateObj1 = new Date(y1, m1 - 1, d1, 12, 0, 0);
+  const dateObj2 = new Date(y2, m2 - 1, d2, 12, 0, 0);
+  
+  // Calculate difference in days
+  const diffTime = dateObj2.getTime() - dateObj1.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+  
+  return diffDays === 1;
+}
+
 // Calculate longest commit streak using GraphQL contribution calendar
 async function calculateCommitStreak(username: string, year: number, token?: string): Promise<number> {
   const query = `
@@ -143,7 +173,7 @@ async function calculateCommitStreak(username: string, year: number, token?: str
     const data = await githubGraphQL(query, variables, token);
     const weeks = data.user.contributionsCollection.contributionCalendar.weeks;
 
-    // Extract dates with contributions (matching Python logic)
+    // Extract dates with contributions
     const dates: string[] = [];
     for (const week of weeks) {
       for (const day of week.contributionDays) {
@@ -155,24 +185,17 @@ async function calculateCommitStreak(username: string, year: number, token?: str
 
     if (dates.length === 0) return 0;
 
-    // Convert to Date objects and sort (matching Python)
+    // Convert to numeric format and sort
     const sortedDates = dates
-      .map(d => new Date(d))
-      .sort((a, b) => a.getTime() - b.getTime());
+      .map(d => parseDateString(d))
+      .sort((a, b) => a - b);
 
-    // Calculate longest streak (matching Python exactly)
-    let longest = 0;
-    let current = dates.length > 0 ? 1 : 0;
+    // Calculate longest streak
+    let longest = 1;
+    let current = 1;
 
     for (let i = 1; i < sortedDates.length; i++) {
-      const prevDate = sortedDates[i - 1];
-      const currDate = sortedDates[i];
-      
-      // Calculate difference in days
-      const timeDiff = currDate.getTime() - prevDate.getTime();
-      const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-
-      if (daysDiff === 1) {
+      if (areConsecutiveDays(sortedDates[i - 1], sortedDates[i])) {
         // Consecutive day
         current++;
       } else {
@@ -192,7 +215,37 @@ async function calculateCommitStreak(username: string, year: number, token?: str
   }
 }
 
-// Get total contributions for a year using GraphQL
+// Get year-specific commit count using GraphQL
+async function getYearCommitCount(username: string, year: number, token?: string): Promise<number> {
+  const query = `
+    query($login: String!, $from: DateTime!, $to: DateTime!) {
+      user(login: $login) {
+        contributionsCollection(from: $from, to: $to) {
+          totalCommitContributions
+          restrictedContributionsCount
+        }
+      }
+    }
+  `;
+
+  const variables = {
+    login: username,
+    from: `${year}-01-01T00:00:00Z`,
+    to: `${year}-12-31T23:59:59Z`,
+  };
+
+  try {
+    const data = await githubGraphQL(query, variables, token);
+    const collection = data.user.contributionsCollection;
+    // Include both public commits and restricted (private repo) commits
+    return collection.totalCommitContributions + collection.restrictedContributionsCount;
+  } catch (error) {
+    console.error("Error getting year commit count:", error);
+    return 0;
+  }
+}
+
+// Get total contributions for a year using GraphQL (includes all contribution types)
 async function getTotalContributions(username: string, year: number, token?: string): Promise<number> {
   const query = `
     query($login: String!, $from: DateTime!, $to: DateTime!) {
@@ -269,42 +322,47 @@ export async function getGithubData(username: string, year: number, userToken?: 
       fetchAllPages(`/users/${username}/following`, userToken, 5),
     ]);
 
-    // Calculate total stars and forks
-    const totalStarsReceived = allRepos.reduce(
+    // Calculate total stars and forks (only from non-forked repos for accuracy)
+    const nonForkedRepos = allRepos.filter((repo: any) => !repo.fork);
+    const totalStarsReceived = nonForkedRepos.reduce(
       (sum: number, repo: any) => sum + repo.stargazers_count,
       0
     );
-    const totalForksReceived = allRepos.reduce(
+    const totalForksReceived = nonForkedRepos.reduce(
       (sum: number, repo: any) => sum + repo.forks_count,
       0
     );
 
-    // Get commit counts per repo using contributors endpoint
-    console.log("Fetching commit counts...");
-    const repoCommitData: Array<{ repo: string; commits: number; language: string | null }> = [];
-    let totalCommits = 0;
+    // Get year-specific commit count using GraphQL (most accurate)
+    console.log("Fetching year-specific commit count...");
+    const totalCommits = await getYearCommitCount(username, year, userToken);
+    console.log(`Total commits for ${year}: ${totalCommits}`);
 
-    // Process repos in batches to avoid overwhelming the API
+    // Get commit counts per repo (for "top repo by commits" feature)
+    // Only include non-forked repos for this breakdown
+    console.log("Fetching per-repo commit counts...");
+    const repoCommitData: Array<{ repo: string; commits: number; language: string | null; isFork: boolean }> = [];
+
+    // Process non-forked repos in batches to avoid overwhelming the API
     const batchSize = 10;
-    for (let i = 0; i < allRepos.length; i += batchSize) {
-      const batch = allRepos.slice(i, i + batchSize);
+    for (let i = 0; i < nonForkedRepos.length; i += batchSize) {
+      const batch = nonForkedRepos.slice(i, i + batchSize);
       
       await Promise.all(batch.map(async (repo: any) => {
         try {
-          // Use contributors endpoint for accurate commit count
+          // Use contributors endpoint for per-repo commit count
           const contributors = await githubFetch(`/repos/${repo.full_name}/contributors`, userToken);
           
           if (Array.isArray(contributors)) {
-            const userContrib = contributors.find((c: any) => c.login === username);
+            const userContrib = contributors.find((c: any) => c.login.toLowerCase() === username.toLowerCase());
             const commitCount = userContrib?.contributions || 0;
             
             repoCommitData.push({
               repo: repo.name,
               commits: commitCount,
               language: repo.language,
+              isFork: repo.fork,
             });
-            
-            totalCommits += commitCount;
           }
         } catch (error) {
           console.log(`Skipping ${repo.name}:`, error);
@@ -312,23 +370,21 @@ export async function getGithubData(username: string, year: number, userToken?: 
       }));
     }
 
-    console.log(`Total commits calculated: ${totalCommits}`);
-
-    // Find repo with most commits
+    // Find repo with most commits (excluding forks for accuracy)
     const topRepoByCommits = repoCommitData
-      .filter(r => r.commits > 0)
+      .filter(r => r.commits > 0 && !r.isFork)
       .sort((a, b) => b.commits - a.commits)[0] || null;
 
     // Calculate longest commit streak using GraphQL (more accurate)
     console.log("Calculating commit streak with GraphQL...");
     const longestStreak = await calculateCommitStreak(username, year, userToken);
 
-    // Fetch language data
+    // Fetch language data (only from non-forked repos for accuracy)
     const languageMap: Record<string, number> = {};
     
     const langBatchSize = 20;
-    for (let i = 0; i < allRepos.length; i += langBatchSize) {
-      const batch = allRepos.slice(i, i + langBatchSize);
+    for (let i = 0; i < nonForkedRepos.length; i += langBatchSize) {
+      const batch = nonForkedRepos.slice(i, i + langBatchSize);
       
       await Promise.all(batch.map(async (repo: any) => {
         try {
@@ -344,8 +400,8 @@ export async function getGithubData(username: string, year: number, userToken?: 
     
     const sortedLanguages = Object.entries(languageMap).sort(([, a], [, b]) => b - a);
 
-    // Get top repos by different metrics
-    const topReposByStars = [...allRepos]
+    // Get top repos by different metrics (using non-forked repos for stars/forks rankings)
+    const topReposByStars = [...nonForkedRepos]
       .sort((a, b) => b.stargazers_count - a.stargazers_count)
       .slice(0, 10)
       .map((r: any) => ({
@@ -356,7 +412,7 @@ export async function getGithubData(username: string, year: number, userToken?: 
         url: r.html_url,
       }));
 
-    const topReposByForks = [...allRepos]
+    const topReposByForks = [...nonForkedRepos]
       .sort((a, b) => b.forks_count - a.forks_count)
       .slice(0, 10)
       .map((r: any) => ({
