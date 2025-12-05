@@ -342,7 +342,16 @@ export async function getGithubData(username: string, year: number, userToken?: 
       }));
     }
     
-    const sortedLanguages = Object.entries(languageMap).sort(([, a], [, b]) => b - a);
+    // Calculate total bytes for percentage conversion
+    const totalBytes = Object.values(languageMap).reduce((sum, bytes) => sum + bytes, 0);
+    
+    // Convert to percentages and sort
+    const sortedLanguages = Object.entries(languageMap)
+      .map(([lang, bytes]) => {
+        const percentage = totalBytes > 0 ? ((bytes / totalBytes) * 100).toFixed(2) : '0';
+        return [lang, percentage];
+      })
+      .sort(([, a], [, b]) => parseFloat(b as string) - parseFloat(a as string));
 
     // Get top repos by different metrics
     const topReposByStars = [...allRepos]

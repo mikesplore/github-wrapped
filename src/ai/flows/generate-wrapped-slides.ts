@@ -78,9 +78,16 @@ const generateWrappedSlidesPrompt = ai.definePrompt({
 
   REQUIRED SLIDES (18-20 total):
   
-  1.  **Intro:** DESTROY them immediately. "Welcome to your GitHub autopsy for {{year}}, @{{username}}. Spoiler: it's terminal." Reference their pathetic username.
+  1.  **Intro:** DESTROY them immediately. "Welcome to your GitHub autopsy for {{year}}, {{username}}. Spoiler: it's terminal." Reference their username (WITHOUT @).
   
-  2.  **Year at a Glance:** Present the stats in markdown then EVISCERATE:
+  2.  **Year at a Glance:** CREATE A ROASTFUL SUBTITLE based on their stats:
+      - If low commits (<100): "Your Year at a Glance: The Bare Minimum Edition 💀"
+      - If high commits but low quality: "Your Year at a Glance: Quantity Over Quality 💀"
+      - If mostly private: "Your Year at a Glance: The Shame Collection 💀"
+      - If mostly forks: "Your Year at a Glance: Professional Code Thief 💀"
+      - If balanced but mediocre: "Your Year at a Glance: Aggressively Average 💀"
+      
+      Then present stats in markdown and EVISCERATE:
       - **Total Commits:** [X] (*"My grandma commits more and she's dead"*)
       - **Pull Requests:** [X] (*savage line*)
       - **Issues:** [X] (*brutal mockery*)
@@ -167,7 +174,7 @@ const generateWrappedSlidesPrompt = ai.definePrompt({
       
       You've managed to turn GitHub into a graveyard of abandoned dreams and mediocre code. Your contributions to open source? Non-existent. Your impact on the dev community? Negligible. Your consistency? Laughable.
       
-      But hey, there's always next year to disappoint us again. 
+      But hey, the bar is set so low for next year that even you might meet it. 
       
       *Try actually committing to something this year. Anything.*
       
@@ -176,6 +183,9 @@ const generateWrappedSlidesPrompt = ai.definePrompt({
   ABSOLUTE RULES:
   - Generate ALL 18-20 slides
   - **USE MARKDOWN AGGRESSIVELY** 
+  - NO @ mentions of username (just use the name directly)
+  - Every slide title should be CREATIVE and ROASTFUL, not generic
+  - "Year at a Glance" should have a dynamic subtitle based on their pathetic stats
   - NO positive comments unless dripping with sarcasm
   - Use ACTUAL numbers from data
   - Compare to real developers (they'll lose)

@@ -52,18 +52,45 @@ const iconMapping: Record<string, React.ReactNode> = {
 
 function getSlideAttributes(slideContent: string, index: number) {
   const lowerCaseContent = slideContent.toLowerCase();
+  
+  // Enhanced gradient mapping for better visual variety
+  const gradientMap: Record<string, string> = {
+    intro: "from-purple-900/20 via-pink-900/10 to-red-900/20",
+    commit: "from-green-900/20 via-emerald-900/10 to-teal-900/20",
+    language: "from-blue-900/20 via-indigo-900/10 to-violet-900/20",
+    repo: "from-orange-900/20 via-amber-900/10 to-yellow-900/20",
+    graveyard: "from-gray-900/30 via-slate-900/20 to-zinc-900/30",
+    pr: "from-cyan-900/20 via-sky-900/10 to-blue-900/20",
+    issue: "from-red-900/20 via-rose-900/10 to-pink-900/20",
+    star: "from-yellow-900/20 via-amber-900/10 to-orange-900/20",
+    activity: "from-emerald-900/20 via-green-900/10 to-lime-900/20",
+    personality: "from-fuchsia-900/20 via-purple-900/10 to-violet-900/20",
+    streak: "from-red-900/20 via-orange-900/10 to-yellow-900/20",
+    social: "from-pink-900/20 via-rose-900/10 to-red-900/20",
+    outro: "from-black/40 via-gray-900/30 to-black/40",
+  };
+  
+  let gradient = "from-accent/10 via-background to-primary/5"; // default
+  
   for (const key in iconMapping) {
     if (lowerCaseContent.includes(key)) {
       const image =
         PlaceHolderImages.find((img) => img.id === key) ||
         PlaceHolderImages.find((img) => img.id === "fallback");
-      return { icon: iconMapping[key], image };
+      gradient = gradientMap[key] || gradient;
+      return { icon: iconMapping[key], image, gradient };
     }
   }
+  
   const fallbackImage = PlaceHolderImages.find((img) => img.id === "fallback");
   // Distribute icons for slides that don't match keywords
   const defaultIcons = Object.values(iconMapping);
-  return { icon: defaultIcons[index % defaultIcons.length], image: fallbackImage };
+  const gradientValues = Object.values(gradientMap);
+  return { 
+    icon: defaultIcons[index % defaultIcons.length], 
+    image: fallbackImage,
+    gradient: gradientValues[index % gradientValues.length]
+  };
 }
 
 export default function RoastDisplay({
@@ -99,8 +126,8 @@ export default function RoastDisplay({
       // Remove markdown formatting from title (**, *, etc.)
       const title = rawTitle.replace(/\*\*|\*/g, '').trim();
       const description = descriptionParts.join("\n\n");
-      const { icon, image } = getSlideAttributes(slide, index);
-      return { title, description, icon, image };
+      const { icon, image, gradient } = getSlideAttributes(slide, index);
+      return { title, description, icon, image, gradient };
     });
   }, [slides]);
   
@@ -164,8 +191,9 @@ export default function RoastDisplay({
             {slideData.map((slide, index) => (
               <CarouselItem key={index} className="h-full">
                 <div className="relative flex min-h-full w-full items-center justify-center p-0">
-                  {/* Background gradient based on slide type */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-background to-primary/5" />
+                  {/* Enhanced background gradient based on slide type */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${slide.gradient}`} />
+                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-background/50 to-background" />
                   
                   {/* Image background if available */}
                   {slide.image && (
@@ -174,11 +202,11 @@ export default function RoastDisplay({
                         src={slide.image.imageUrl}
                         alt={slide.image.description}
                         fill
-                        className="object-cover opacity-40"
+                        className="object-cover opacity-30 mix-blend-soft-light"
                         data-ai-hint={slide.image.imageHint}
                         priority={index === 0}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/70 to-background/40" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/60" />
                     </>
                   )}
 
