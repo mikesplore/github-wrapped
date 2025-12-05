@@ -167,7 +167,7 @@ const generateWrappedSlidesPrompt = ai.definePrompt({
       
       You've managed to turn GitHub into a graveyard of abandoned dreams and mediocre code. Your contributions to open source? Non-existent. Your impact on the dev community? Negligible. Your consistency? Laughable.
       
-      But hey, there's always {{year+1}} to disappoint us again. 
+      But hey, there's always next year to disappoint us again. 
       
       *Try actually committing to something this year. Anything.*
       
