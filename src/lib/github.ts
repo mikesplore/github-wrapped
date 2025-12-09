@@ -404,6 +404,39 @@ export async function getGithubData(username: string, year: number, userToken?: 
     // Forked repos
     const forkedRepos = allRepos.filter((repo: any) => repo.fork);
 
+    // Fetch recent commit messages for roasting (sample from top repos)
+    console.log("Fetching commit messages for roasting...");
+    const commitMessages: Array<{ repo: string; message: string; date: string }> = [];
+    
+    // Get commits from top 5 repos by commits
+    const topCommitRepos = repoCommitData
+      .filter(r => r.commits > 0)
+      .sort((a, b) => b.commits - a.commits)
+      .slice(0, 5);
+    
+    for (const repoData of topCommitRepos) {
+      try {
+        const commits = await githubFetch(
+          `/repos/${username}/${repoData.repo}/commits?author=${username}&since=${year}-01-01T00:00:00Z&until=${year}-12-31T23:59:59Z&per_page=20`,
+          userToken
+        );
+        
+        if (Array.isArray(commits)) {
+          commits.slice(0, 10).forEach((commit: any) => {
+            commitMessages.push({
+              repo: repoData.repo,
+              message: commit.commit.message.split('\n')[0], // First line only
+              date: commit.commit.author.date,
+            });
+          });
+        }
+      } catch (error) {
+        console.log(`Skipping commit messages for ${repoData.repo}`);
+      }
+    }
+    
+    console.log(`Fetched ${commitMessages.length} commit messages`);
+
     return {
       user: {
         login: user.login,
@@ -436,6 +469,7 @@ export async function getGithubData(username: string, year: number, userToken?: 
       topRepoByCommits,
       recentlyUpdated,
       repoGraveyard,
+      commitMessages,
       starredSample: starredRepos.slice(0, 10).map((r: any) => ({
         full_name: r.full_name,
         description: r.description,
